@@ -153,7 +153,9 @@ function render(data) {
       head.appendChild(el('span', null, num(sum)));
       paper.appendChild(head);
       groups[k].forEach(e => paper.appendChild(
-        line(e.title || '이름 없는 항목', `${e.payerName} 결제 · ${e.count}명`, e.amount, false)));
+        line(e.title || '이름 없는 항목',
+             `${e.payerName} 결제 · ${e.count}명${e.foreign ? ' · ' + e.foreign : ''}`,
+             e.amount, false)));
     });
 
   paper.appendChild(el('hr'));
