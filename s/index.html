@@ -117,6 +117,21 @@ function render(data) {
   paper.appendChild(total);
   paper.appendChild(el('hr'));
 
+  // 개인별 낸 돈 — 누가 얼마를 대신 결제했나
+  const payers = (s.balances || []).filter(b => (b.paidItems || []).length);
+  if (payers.length) {
+    paper.appendChild(el('h2', null, '개인별 낸 돈'));
+    payers.forEach(b => {
+      const head = el('div', 'person');
+      head.appendChild(el('span', null, b.name));
+      head.appendChild(el('span', null, '낸 돈 ' + num(b.paid)));
+      paper.appendChild(head);
+      b.paidItems.forEach(i =>
+        paper.appendChild(line(i.title || '이름 없는 항목', '', i.amount, true)));
+    });
+    paper.appendChild(el('hr'));
+  }
+
   // 개인별 내는 돈
   paper.appendChild(el('h2', null, '개인별 내는 돈'));
   (s.balances || []).forEach(b => {
