@@ -49,6 +49,23 @@
                font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
   .foot{margin-top:18px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A8A8A;line-height:1.6}
   .brand{margin-top:12px;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:3px}
+  /* 아래 두 배너는 종이(영수증) 바깥에 둔다 — 정산 내용이 아니다. */
+  .promo{max-width:520px;margin:16px auto 0;background:#FBFAF7;border-radius:14px;
+         padding:18px 18px 20px;box-shadow:0 10px 30px rgba(15,59,52,.12);text-align:center}
+  .promo .t{font-size:14px;font-weight:700;color:#0F3B34}
+  .promo .d{margin-top:5px;font-size:12px;color:#4C5D59;line-height:1.6}
+  .stores{display:flex;gap:8px;margin-top:12px}
+  .store{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+         border:0;border-radius:10px;padding:11px 8px;cursor:pointer;
+         background:#0F3B34;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700}
+  .store.alt{background:#EAF3F0;color:#0F3B34}
+  .store svg{width:15px;height:15px;flex:none}
+  .promo .soon{margin-top:9px;font-size:11px;color:#8A8A8A;min-height:14px}
+  /* 광고 자리. 실제 스크립트를 붙일 때 이 박스 안을 갈아 끼운다. */
+  .ad{max-width:520px;margin:12px auto 0;height:100px;border-radius:14px;
+      border:1.4px dashed #B9C6C2;background:#F1F5F3;display:flex;
+      align-items:center;justify-content:center;color:#8A9C97;
+      font-size:12px;letter-spacing:2px;font-family:'IBM Plex Mono',monospace}
   .state{max-width:420px;margin:90px auto;text-align:center;color:#4C5D59;line-height:1.8}
   .state .big{font-size:36px}
   .state h2{letter-spacing:0;font-size:18px;margin:14px 0 8px;font-family:inherit}
@@ -188,6 +205,36 @@ function render(data) {
 
   app.innerHTML = '';
   app.appendChild(paper);
+  app.appendChild(promo());
+  app.appendChild(ad());
+}
+
+/// 앱 설치 배너. 아직 스토어 주소가 없어서 누르면 안내만 띄운다.
+function promo() {
+  const box = el('div', 'promo');
+  box.appendChild(el('div', 't', '정산은 척척총무로'));
+  box.appendChild(el('div', 'd',
+    '영수증을 넣으면 누가 누구에게 얼마를 보낼지 알아서 계산합니다.'));
+
+  const row = el('div', 'stores');
+  const note = el('div', 'soon');
+  [['Google Play', ''], ['App Store', 'alt']].forEach(([name, cls]) => {
+    const btn = el('button', 'store' + (cls ? ' ' + cls : ''));
+    btn.appendChild(el('span', null, name + '에서 받기'));
+    btn.onclick = () => {
+      note.textContent = '출시 준비 중입니다';
+      setTimeout(() => (note.textContent = ''), 1800);
+    };
+    row.appendChild(btn);
+  });
+  box.appendChild(row);
+  box.appendChild(note);
+  return box;
+}
+
+/// 광고 자리.
+function ad() {
+  return el('div', 'ad', 'AD');
 }
 
 // 토큰은 해시로 받는다 — 그래야 서버 로그에 남지 않는다.
