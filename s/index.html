@@ -192,6 +192,11 @@ function render(data) {
       paid.style.color = '#8A8A8A';
       paper.appendChild(paid);
     }
+    if (b.prepaid) {
+      const pre = line('미리 낸 회비', '', -b.prepaid, true);
+      pre.style.color = '#8A8A8A';
+      paper.appendChild(pre);
+    }
     const net = el('div', 'net');
     net.appendChild(el('span', null, b.net > 0 ? '받을 돈' : b.net < 0 ? '보낼 돈' : '정산 완료'));
     net.appendChild(el('span', null, won(Math.abs(b.net || 0))));
