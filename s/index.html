@@ -46,6 +46,17 @@
           font-weight:700;font-size:15px;margin:14px 0 3px}
   .net{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;
        font-weight:700;font-size:13.5px;color:#0F3B34;padding-left:16px;margin-top:5px}
+  /* 개인별 상세는 접어 둔다. 각자 자기 것만 펴 보면 된다. */
+  details.person-box{border-top:1px solid #EDEAE3}
+  details.person-box:first-of-type{border-top:0}
+  details.person-box>summary{list-style:none;cursor:pointer;padding:11px 0;
+        display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+        font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px}
+  details.person-box>summary::-webkit-details-marker{display:none}
+  details.person-box>summary .amt{font-weight:700;font-size:14px;white-space:nowrap}
+  details.person-box>summary .caret{color:#8A8A8A;font-size:11px;font-weight:400}
+  details.person-box[open]>summary .caret{transform:rotate(180deg);display:inline-block}
+  details.person-box>.body{padding-bottom:10px}
   .send{background:#EAF3F0;border-radius:10px;padding:11px 13px;margin:7px 0;
         font-family:'IBM Plex Mono',monospace}
   .send .top{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:14px;color:#0F3B34}
@@ -135,6 +146,23 @@ function line(title, note, amount, indent) {
   return row;
 }
 
+/// 한 사람의 상세. 이름·금액만 보이고 항목은 눌러야 펴진다.
+function personBox(name, amountLabel, fill) {
+  const box = el('details', 'person-box');
+  const summary = el('summary');
+  summary.appendChild(el('span', null, name));
+  const right = el('span', 'amt');
+  right.appendChild(el('span', null, amountLabel));
+  right.appendChild(document.createTextNode(' '));
+  right.appendChild(el('span', 'caret', '▾'));
+  summary.appendChild(right);
+  box.appendChild(summary);
+  const body = el('div', 'body');
+  fill(body);
+  box.appendChild(body);
+  return box;
+}
+
 function render(data) {
   const s = data.snapshot;
   document.title = (s.title || '정산') + ' · 척척총무';
@@ -163,6 +191,13 @@ function render(data) {
              e.amount, false)));
     });
 
+  paper.appendChild(el('hr'));
+  const total = el('div', 'total');
+  total.appendChild(el('span', 'l', '합계'));
+  total.appendChild(el('span', 'r', won(s.total)));
+  paper.appendChild(total);
+  paper.appendChild(el('hr'));
+
   // 타입(카테고리)별 — 어디에 얼마를 썼나, 비율까지.
   if ((s.categories || []).length) {
     paper.appendChild(el('hr'));
@@ -183,56 +218,8 @@ function render(data) {
     });
   }
 
-  paper.appendChild(el('hr'));
-  const total = el('div', 'total');
-  total.appendChild(el('span', 'l', '합계'));
-  total.appendChild(el('span', 'r', won(s.total)));
-  paper.appendChild(total);
-  paper.appendChild(el('hr'));
-
-  // 개인별 낸 돈 — 누가 얼마를 대신 결제했나
-  const payers = (s.balances || []).filter(b => (b.paidItems || []).length);
-  if (payers.length) {
-    paper.appendChild(el('h2', null, '개인별 낸 돈'));
-    payers.forEach(b => {
-      const head = el('div', 'person');
-      head.appendChild(el('span', null, b.name));
-      head.appendChild(el('span', null, '낸 돈 ' + num(b.paid)));
-      paper.appendChild(head);
-      b.paidItems.forEach(i =>
-        paper.appendChild(line(i.title || '이름 없는 항목', '', i.amount, true)));
-    });
-    paper.appendChild(el('hr'));
-  }
-
-  // 개인별 내는 돈
-  paper.appendChild(el('h2', null, '개인별 내는 돈'));
-  (s.balances || []).forEach(b => {
-    const head = el('div', 'person');
-    head.appendChild(el('span', null, b.name));
-    head.appendChild(el('span', null, '낼 돈 ' + num(b.owed)));
-    paper.appendChild(head);
-    (b.items || []).filter(i => i.amount !== 0).forEach(i =>
-      paper.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', i.amount, true)));
-    if (b.paid) {
-      const paid = line('낸 돈', '', -b.paid, true);
-      paid.style.color = '#8A8A8A';
-      paper.appendChild(paid);
-    }
-    if (b.prepaid) {
-      const pre = line('미리 낸 회비', '', -b.prepaid, true);
-      pre.style.color = '#8A8A8A';
-      paper.appendChild(pre);
-    }
-    const net = el('div', 'net');
-    net.appendChild(el('span', null, b.net > 0 ? '받을 돈' : b.net < 0 ? '보낼 돈' : '정산 완료'));
-    net.appendChild(el('span', null, won(Math.abs(b.net || 0))));
-    paper.appendChild(net);
-  });
-
   // 보낼 돈
   if ((s.transfers || []).length) {
-    paper.appendChild(el('hr'));
     paper.appendChild(el('h2', null, '보낼 돈'));
     s.transfers.forEach(t => {
       const box = el('div', 'send');
@@ -257,7 +244,42 @@ function render(data) {
     if (!data.includeAccounts) {
       paper.appendChild(el('div', 'foot', '계좌는 링크에 담지 않았습니다'));
     }
+    paper.appendChild(el('hr'));
   }
+
+  // 개인별 낸 돈 — 누가 얼마를 대신 결제했나. 상세는 눌러야 펴진다.
+  const payers = (s.balances || []).filter(b => (b.paidItems || []).length);
+  if (payers.length) {
+    paper.appendChild(el('h2', null, '개인별 낸 돈'));
+    payers.forEach(b => paper.appendChild(
+      personBox(b.name, '낸 돈 ' + num(b.paid), body => {
+        b.paidItems.forEach(i =>
+          body.appendChild(line(i.title || '이름 없는 항목', '', i.amount, true)));
+      })));
+    paper.appendChild(el('hr'));
+  }
+
+  // 개인별 내는 돈 — 맨 마지막. 각자 자기 것만 펴 본다.
+  paper.appendChild(el('h2', null, '개인별 내는 돈'));
+  (s.balances || []).forEach(b => paper.appendChild(
+    personBox(b.name, '낼 돈 ' + num(b.owed), body => {
+      (b.items || []).filter(i => i.amount !== 0).forEach(i =>
+        body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', i.amount, true)));
+      if (b.paid) {
+        const paid = line('낸 돈', '', -b.paid, true);
+        paid.style.color = '#8A8A8A';
+        body.appendChild(paid);
+      }
+      if (b.prepaid) {
+        const pre = line('미리 낸 회비', '', -b.prepaid, true);
+        pre.style.color = '#8A8A8A';
+        body.appendChild(pre);
+      }
+      const net = el('div', 'net');
+      net.appendChild(el('span', null, b.net > 0 ? '받을 돈' : b.net < 0 ? '보낼 돈' : '정산 완료'));
+      net.appendChild(el('span', null, won(Math.abs(b.net || 0))));
+      body.appendChild(net);
+    })));
 
   const days = Math.max(0,
     Math.ceil((new Date(data.expiresAt) - Date.now()) / 86400000));
