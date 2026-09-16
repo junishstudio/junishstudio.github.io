@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>정산 · 척척총무</title>
+<title>정산 · 딱정산</title>
 <meta name="robots" content="noindex, nofollow">
-<meta property="og:title" content="정산 내역 · 척척총무">
+<meta property="og:title" content="정산 내역 · 딱정산">
+<meta property="og:image" content="https://junishstudio.github.io/s/og.png">
 <meta property="og:description" content="누가 무엇을 얼마 썼고, 각자 얼마를 내는지.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -111,7 +112,7 @@
 <body>
 <div id="app"><div class="state"><div class="big">🧾</div><p>불러오는 중…</p></div></div>
 <script>
-const FN = 'https://fvdihfmpjmgoffxosrmj.supabase.co/functions/v1/settle-share/';
+const FN = 'https://fvdihfmpjmgoffxosrmj.supabase.co/functions/v1/ddak-share/';
 const app = document.getElementById('app');
 // 스토어 아이콘. 텍스트 대신 이걸 넣는다.
 const STORE_ICON = {
@@ -126,7 +127,7 @@ const num = n => (n || 0).toLocaleString('ko-KR');
 
 function state(emoji, title, body) {
   app.innerHTML = `<div class="state"><div class="big">${emoji}</div>
-    <h2>${title}</h2><p>${body}</p><div class="brand">척척총무</div></div>`;
+    <h2>${title}</h2><p>${body}</p><div class="brand">딱정산</div></div>`;
 }
 
 function el(tag, cls, text) {
@@ -165,7 +166,7 @@ function personBox(name, amountLabel, fill) {
 
 function render(data) {
   const s = data.snapshot;
-  document.title = (s.title || '정산') + ' · 척척총무';
+  document.title = (s.title || '정산') + ' · 딱정산';
 
   const paper = el('div', 'paper');
   paper.appendChild(el('h1', null, s.title || '정산'));
@@ -284,7 +285,7 @@ function render(data) {
   const days = Math.max(0,
     Math.ceil((new Date(data.expiresAt) - Date.now()) / 86400000));
   paper.appendChild(el('div', 'foot', `이 링크는 ${days}일 뒤 만료됩니다`));
-  paper.appendChild(el('div', 'brand', '척척총무'));
+  paper.appendChild(el('div', 'brand', '딱정산'));
 
   app.innerHTML = '';
   app.appendChild(paper);
@@ -343,7 +344,7 @@ function apps(rows) {
 /// 앱 설치 배너. 아직 스토어 주소가 없어서 누르면 안내만 띄운다.
 function promo() {
   const box = el('div', 'promo');
-  box.appendChild(el('div', 't', '정산은 척척총무로'));
+  box.appendChild(el('div', 't', '정산은 딱정산으로'));
   box.appendChild(el('div', 'd',
     '결제 항목만 넣으면 누가 누구에게 얼마를 보낼지 알아서 계산합니다.'));
 
