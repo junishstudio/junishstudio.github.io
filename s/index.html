@@ -284,7 +284,9 @@ function render(data) {
 
   const days = Math.max(0,
     Math.ceil((new Date(data.expiresAt) - Date.now()) / 86400000));
-  paper.appendChild(el('div', 'foot', `이 링크는 ${days}일 뒤 만료됩니다`));
+  // 앱에서 정산을 고치면 같은 링크 내용이 바뀐다. 언제 기준인지 보여 준다.
+  const updated = s.updatedAt ? `${s.updatedAt} 기준 · ` : '';
+  paper.appendChild(el('div', 'foot', `${updated}이 링크는 ${days}일 뒤 만료됩니다`));
   paper.appendChild(el('div', 'brand', '딱정산'));
 
   app.innerHTML = '';
