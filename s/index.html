@@ -5,129 +5,192 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>정산 · 딱정산</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#F3F2ED">
 <meta property="og:title" content="정산 내역 · 딱정산">
 <meta property="og:image" content="https://junishstudio.github.io/s/og.png">
 <meta property="og:description" content="누가 무엇을 얼마 썼고, 각자 얼마를 내는지.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
+  /* v4 시안(딱정산_v4_코드정합 · A) — 영수증 그대로, 잉크·라임. 색은 앱 tokens.dart와 같다. */
+  :root{--paper:#F3F2ED;--ink:#14161A;--lime:#D9F26A;--green:#1F7A57;--coral:#E4572E;
+        --sub:#6F757C;--muted:#9AA1A8;--line:#E6E5DF;--hair:#EFEEE9;--dash:#C9CDD1;--track:#E9E8E2;
+        --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+        --sans:Pretendard,-apple-system,'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif}
   *{box-sizing:border-box}
-  body{margin:0;background:#E6EBE9;color:#1A1A1A;padding:24px 12px 56px;
-       font-family:'IBM Plex Sans KR',system-ui,-apple-system,sans-serif}
-  .paper{max-width:520px;margin:0 auto;background:#FBFAF7;border-radius:14px;
-         padding:30px 22px 26px;box-shadow:0 10px 30px rgba(15,59,52,.12)}
-  h1{margin:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:24px;letter-spacing:1px}
-  .meta{margin-top:9px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#8A8A8A}
-  hr{border:0;border-top:1.4px dashed #CFCBC2;margin:16px 0}
-  h2{margin:0 0 8px;font-family:'IBM Plex Mono',monospace;font-size:14px;letter-spacing:2px}
-  .date{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;
-        font-weight:700;font-size:14px;margin:12px 0 3px}
-  .date span:last-child{color:#8A8A8A;font-weight:500}
-  .row{display:flex;align-items:baseline;gap:8px;font-family:'IBM Plex Mono',monospace;
-       font-size:13.5px;color:#3A3A3A;padding:2px 0}
-  .row.in{padding-left:16px}
-  /* 긴 항목명이 줄바꿈되며 줄을 무너뜨리지 않게 한 줄로 자른다. */
-  .row>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-                        max-width:52%;flex:0 1 auto}
-  .row .note{overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
-  .row .lead{flex:1;border-bottom:1.5px dotted #D5D1C8;transform:translateY(-4px);min-width:12px}
-  .row .amt{width:92px;text-align:right;white-space:nowrap}
-  .note{font-size:11.5px;color:#8A8A8A;white-space:nowrap}
-  .cat{margin:8px 0 4px;font-family:'IBM Plex Mono',monospace;font-size:13px}
-  .cat .top{display:flex;justify-content:space-between;color:#3A3A3A}
-  .cat .top span:last-child{color:#8A8A8A}
-  .cat .bar{height:6px;border-radius:3px;background:#EAEDEA;margin-top:4px;overflow:hidden}
-  .cat .bar i{display:block;height:100%;background:#0F7A63;border-radius:3px}
-  .total{display:flex;justify-content:space-between;align-items:baseline;
-         font-family:'IBM Plex Mono',monospace;font-weight:700}
-  .total .l{font-size:17px;letter-spacing:2px}
-  .total .r{font-size:20px}
-  .person{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;
-          font-weight:700;font-size:15px;margin:14px 0 3px}
-  .net{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;
-       font-weight:700;font-size:13.5px;color:#0F3B34;padding-left:16px;margin-top:5px}
-  /* 개인별 상세는 접어 둔다. 각자 자기 것만 펴 보면 된다. */
-  details.person-box{border-top:1px solid #EDEAE3}
-  details.person-box:first-of-type{border-top:0}
-  details.person-box>summary{list-style:none;cursor:pointer;padding:11px 0;
-        display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-        font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px}
-  details.person-box>summary::-webkit-details-marker{display:none}
-  details.person-box>summary .amt{font-weight:700;font-size:14px;white-space:nowrap}
-  details.person-box>summary .caret{color:#8A8A8A;font-size:11px;font-weight:400}
-  details.person-box[open]>summary .caret{transform:rotate(180deg);display:inline-block}
-  details.person-box>.body{padding-bottom:10px}
-  .send{background:#EAF3F0;border-radius:10px;padding:11px 13px;margin:7px 0;
-        font-family:'IBM Plex Mono',monospace}
-  .send .top{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:14px;color:#0F3B34}
-  .send .acc{margin-top:6px;font-size:12px;color:#4C5D59;display:flex;justify-content:space-between;gap:8px}
-  .send button{border:0;background:#0F3B34;color:#fff;border-radius:7px;padding:4px 9px;
-               font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
-  .foot{margin-top:18px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A8A8A;line-height:1.6}
-  .brand{margin-top:12px;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:3px}
-  /* 아래 두 배너는 종이(영수증) 바깥에 둔다 — 정산 내용이 아니다. */
-  .promo{max-width:520px;margin:16px auto 0;background:#FBFAF7;border-radius:14px;
-         padding:18px 18px 20px;box-shadow:0 10px 30px rgba(15,59,52,.12);text-align:center}
-  .promo .t{font-size:14px;font-weight:700;color:#0F3B34}
-  .promo .d{margin-top:5px;font-size:12px;color:#4C5D59;line-height:1.6}
-  .stores{display:flex;gap:8px;margin-top:12px}
-  .store{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
-         border:0;border-radius:10px;padding:11px 8px;cursor:pointer;
-         background:#0F3B34;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700}
-  .store.alt{background:#EAF3F0;color:#0F3B34}
-  .store svg{width:15px;height:15px;flex:none}
-  .promo .soon{margin-top:9px;font-size:11px;color:#8A8A8A;min-height:14px}
-  .apps{max-width:520px;margin:12px auto 0;background:#FBFAF7;border-radius:14px;
-        padding:16px 16px 8px;box-shadow:0 10px 30px rgba(15,59,52,.12)}
-  .apps>.t{font-size:13px;font-weight:700;color:#0F3B34;margin-bottom:4px}
-  .app{display:flex;align-items:center;gap:11px;padding:11px 0;
-       border-top:1px solid #EDEAE3}
-  .app:first-of-type{border-top:0}
-  .app img{width:42px;height:42px;border-radius:11px;flex:none;background:#EAF3F0}
-  .app .no{width:42px;height:42px;border-radius:11px;flex:none;background:#EAF3F0;
-           display:flex;align-items:center;justify-content:center;
-           color:#0F3B34;font-weight:700;font-size:15px}
+  body{margin:0;background:var(--paper);color:var(--ink);padding:20px 12px 40px;font-family:var(--sans);
+       -webkit-text-size-adjust:100%}
+  #app{max-width:520px;margin:0 auto}
+  .ico{display:block;flex:none}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* 종이 — 위·아래 톱니(절취선). 로딩 뒤 위에서 "인쇄"되며 내려온다. */
+  .paper{position:relative;background:#fff;border-radius:6px;padding:26px 22px 24px;
+         box-shadow:0 10px 30px rgba(20,22,26,.12);animation:print .6s cubic-bezier(.2,.7,.2,1) both}
+  .paper::before,.paper::after{content:'';position:absolute;left:0;right:0;height:12px;
+         background:radial-gradient(circle at 6px 6px,var(--paper) 5px,transparent 5.5px) 0 0/12px 12px repeat-x}
+  .paper::before{top:-6px}
+  .paper::after{bottom:-6px}
+  @keyframes print{from{clip-path:inset(-20px -40px 100% -40px)}to{clip-path:inset(-20px -40px -40px -40px)}}
+  @media (prefers-reduced-motion:reduce){.paper{animation:none}}
+
+  .brandrow{display:flex;align-items:center;justify-content:center;gap:8px}
+  .wordmark{font-family:'Black Han Sans',var(--sans);font-size:16px;letter-spacing:.02em}
+  h1{margin:14px 0 0;text-align:center;font-family:var(--mono);font-size:24px;letter-spacing:.04em;
+     font-weight:700;overflow-wrap:anywhere}
+  .meta{margin-top:8px;text-align:center;font-family:var(--mono);font-size:12.5px;color:var(--sub)}
+  .total{margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;
+         font-family:var(--mono);font-weight:700}
+  .total .l{font-size:15px;letter-spacing:.2em}
+  .total .r{font-size:24px}
+  .total .r small{font-size:14px;margin-left:2px}
+  .mincount{margin-top:4px;text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--sub)}
+  .mincount b{background:var(--lime);color:var(--ink);padding:0 4px;border-radius:3px;font-weight:700}
+  hr{border:0;border-top:1.5px dashed var(--dash);margin:16px 0}
+  h2{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.2em;font-weight:700}
+  .sechead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .sechead .hint{font-size:11px;color:var(--sub)}
+
+  /* 이름 칩 필터 */
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+  .chip{height:26px;padding:0 10px;border-radius:13px;border:0;background:var(--paper);color:var(--ink);
+        display:inline-flex;align-items:center;font:400 12px var(--sans);cursor:pointer}
+  .chip.on{background:var(--ink);color:#fff;font-weight:600}
+
+  /* 사람 캡슐 — 앱 PersonColors와 같은 파스텔 */
+  .pill{display:inline-block;height:26px;line-height:26px;padding:0 10px;border-radius:13px;
+        font-size:12.5px;font-weight:600;white-space:nowrap;max-width:9em;overflow:hidden;text-overflow:ellipsis;
+        min-width:0;flex:0 1 auto}
+
+  /* 송금 카드 — 첫 장만 잉크 반전 */
+  .send{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0}
+  .send .top{display:flex;align-items:center;gap:7px;min-width:0}
+  .send .top .arrow{color:var(--muted)}
+  .send .amt{margin-left:auto;padding-left:4px;font-family:var(--mono);font-size:19px;font-weight:700;white-space:nowrap}
+  .send .acc{margin-top:9px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+             font-family:var(--mono);font-size:12px;color:#4C5259}
+  .send .acc>span{overflow-wrap:anywhere;min-width:0}
+  .copy{height:26px;padding:0 10px;border-radius:13px;border:0;background:var(--ink);color:#fff;flex:none;
+        display:inline-flex;align-items:center;gap:4px;font:700 11px var(--sans);cursor:pointer}
+  .copy.done{background:var(--lime);color:var(--ink)}
+  .send.hero{background:var(--ink);border-color:var(--ink);color:#fff}
+  .send.hero .amt{color:var(--lime)}
+  .send.hero .acc{color:#C7CCD1}
+  .send.hero .copy{background:var(--lime);color:var(--ink)}
+  .send.hero .copy.done{background:#fff}
+  .empty{font-size:12px;color:var(--sub);padding:6px 0 2px}
+
+  /* 결제 항목 · 점선 리더 */
+  .date{display:flex;justify-content:space-between;font-family:var(--mono);font-weight:700;font-size:13.5px;margin:10px 0 3px}
+  .date span:last-child{color:var(--sub);font-weight:500}
+  .row{display:flex;align-items:baseline;gap:8px;font-family:var(--mono);font-size:13.5px;padding:3px 0}
+  .row.in{font-size:13px;padding-left:16px}
+  .row.sub{color:var(--sub)}
+  /* 긴 항목명이 줄을 무너뜨리지 않게 한 줄로 자른다. */
+  .row>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52%;flex:0 1 auto}
+  .row .note{font-size:11.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
+  .row .lead{flex:1;border-bottom:1.5px dotted var(--dash);transform:translateY(-4px);min-width:12px}
+  .row .amt{width:70px;text-align:right;white-space:nowrap;flex:none}
+
+  /* 타입별 */
+  h2.types{margin-bottom:6px}
+  .cat{margin:8px 0 4px;font-family:var(--mono);font-size:13px}
+  .cat .top{display:flex;justify-content:space-between;gap:8px}
+  .cat .top span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cat .top span:last-child{color:var(--sub);white-space:nowrap;flex-shrink:0}
+  .cat .bar{height:6px;border-radius:3px;background:var(--hair);margin-top:4px;overflow:hidden}
+  .cat .bar i{display:block;height:100%;border-radius:3px}
+
+  /* 개인별 — 접힘 */
+  h2.people{margin-bottom:4px}
+  details.person{border-top:1px solid var(--hair)}
+  details.person>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;
+        align-items:center;padding:11px 0;gap:10px}
+  details.person>summary::-webkit-details-marker{display:none}
+  details.person>summary .amt{margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700;white-space:nowrap}
+  details.person>summary .caret{color:var(--muted);transition:transform .15s}
+  details.person[open]>summary .caret{transform:rotate(180deg)}
+  details.person>.body{padding:0 0 10px}
+  .pos{color:var(--green)} .neg{color:var(--coral)} .zero{color:var(--sub)}
+
+  .foot{text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--sub);line-height:1.7}
+  .barcode{margin-top:14px;display:flex;justify-content:center}
+  .barcode span{display:inline-block;height:34px;width:180px;
+    background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 13px)}
+  .tag{margin-top:6px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--muted);
+       overflow-wrap:anywhere}
+
+  /* 종이 밖 — 광고 · 설치 배너 · 앱 목록 */
+  .ad{margin:22px auto 0;height:100px;border-radius:14px;border:1.5px dashed var(--dash);display:flex;
+      align-items:center;justify-content:center;color:var(--muted);font-size:12px;letter-spacing:.14em;font-family:var(--mono)}
+  .promo{margin-top:14px;background:var(--ink);border-radius:22px;padding:18px;color:#fff;display:flex;flex-direction:column;gap:12px}
+  .promo .head{display:flex;align-items:center;gap:12px}
+  .promo .t{font-size:15px;font-weight:700}
+  .promo .d{margin-top:2px;font-size:12.5px;color:var(--muted);line-height:1.5}
+  .stores{display:flex;gap:8px}
+  .store{flex:1;height:42px;border-radius:21px;border:0;background:var(--lime);color:var(--ink);display:flex;
+         align-items:center;justify-content:center;gap:7px;font:700 13px var(--sans);cursor:pointer}
+  .store.alt{background:#2A2E35;color:#fff}
+  .promo .soon{margin-top:-4px;font-size:12px;color:var(--muted);text-align:center}
+  .promo .soon:empty{display:none}
+  .apps{margin-top:10px;background:#fff;border-radius:22px;padding:6px 16px}
+  .apps>.t{padding:10px 0 6px;font-size:12.5px;font-weight:700;color:var(--sub)}
+  .app{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--hair)}
+  .app img,.app .no{width:38px;height:38px;border-radius:11px;flex:none;background:var(--track)}
+  .app .no{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
   .app .txt{flex:1;min-width:0}
-  .app .n{font-size:13.5px;font-weight:700;color:#1A1A1A}
-  .app .g{margin-top:2px;font-size:11.5px;color:#8A8A8A;line-height:1.45}
+  .app .n{font-size:13.5px;font-weight:700}
+  .app .g{font-size:11.5px;color:var(--sub);line-height:1.45}
   .app .links{display:flex;gap:6px;flex:none}
-  .app .links a{display:flex;align-items:center;justify-content:center;
-                width:34px;height:34px;border-radius:10px;text-decoration:none}
-  .app .links svg{width:17px;height:17px;display:block}
-  .app .links .p{background:#0F3B34}
-  .app .links .p svg{fill:#fff}
-  .app .links .i{background:#EAF3F0}
-  .app .links .i svg{fill:#0F3B34}
-  /* 광고 자리. 실제 스크립트를 붙일 때 이 박스 안을 갈아 끼운다. */
-  .ad{max-width:520px;margin:12px auto 0;height:100px;border-radius:14px;
-      border:1.4px dashed #B9C6C2;background:#F1F5F3;display:flex;
-      align-items:center;justify-content:center;color:#8A9C97;
-      font-size:12px;letter-spacing:2px;font-family:'IBM Plex Mono',monospace}
-  .state{max-width:420px;margin:90px auto;text-align:center;color:#4C5D59;line-height:1.8}
-  .state .big{font-size:36px}
-  .state h2{letter-spacing:0;font-size:18px;margin:14px 0 8px;font-family:inherit}
+  .app .links a{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                background:var(--track);color:var(--ink)}
+  .app .links a.p{background:var(--ink);color:#fff}
+
+  /* 상태 화면 — 만료 · 없음 · 로딩 */
+  .state{max-width:340px;margin:72px auto 0;background:#fff;border-radius:18px;padding:22px 16px;text-align:center}
+  .state .logo{width:44px;height:44px;opacity:.35;margin:0 auto}
+  .state .dots{height:44px;display:flex;align-items:center;justify-content:center;gap:5px}
+  .state .dots i{width:8px;height:8px;border-radius:50%;background:var(--ink);animation:blink 1s infinite}
+  .state .dots i:nth-child(2){animation-delay:.2s} .state .dots i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+  .state .t{margin-top:10px;font-size:15px;font-weight:700}
+  .state .d{margin-top:4px;font-size:12.5px;color:var(--sub);line-height:1.5}
+  .state .c{margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .state + .brandrow{margin-top:18px}
 </style>
 </head>
 <body>
-<div id="app"><div class="state"><div class="big">🧾</div><p>불러오는 중…</p></div></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="m-a" viewBox="0 0 100 100"><path d="M50 0C72.5 0 84.6 0 92.3 7.7C100 15.4 100 27.5 100 50C100 72.5 100 84.6 92.3 92.3C84.6 100 72.5 100 50 100C27.5 100 15.4 100 7.7 92.3C0 84.6 0 72.5 0 50C0 27.5 0 15.4 7.7 7.7C15.4 0 27.5 0 50 0Z" fill="#14161A"/><path d="M31 19h38q3 0 3 3v55l-5.7-4.6L60.6 77 54.9 72.4 49.2 77 43.5 72.4 37.8 77 32.1 72.4 26.4 77 28 22q0-3 3-3z" fill="#D9F26A"/><path d="M38 31h24M38 39h24M38 47h14" fill="none" stroke="#14161A" stroke-width="3.4" stroke-linecap="round" opacity=".28"/><path d="M39 59l7.5 7.5L62 51" fill="none" stroke="#14161A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M5 15V6a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M3.6 1.8a1.3 1.3 0 0 0-.5 1.05v18.3c0 .43.19.82.5 1.05L13.4 12 3.6 1.8Zm11.1 8.9L5.5 1.2l11.6 6.6-2.4 2.9Zm0 2.6 2.4 2.9-11.6 6.6 9.2-9.5Zm3.8-4.4 2.6 1.5c.87.5.87 1.75 0 2.25l-2.6 1.5L15.7 12l2.8-3.1Z"/></symbol>
+    <symbol id="i-apple" viewBox="0 0 24 24"><path fill="currentColor" d="M16.3 12.8c0-2.2 1.8-3.3 1.9-3.35-1.04-1.52-2.65-1.73-3.22-1.75-1.37-.14-2.68.8-3.37.8-.7 0-1.77-.78-2.9-.76-1.5.02-2.88.87-3.65 2.2-1.55 2.7-.4 6.7 1.12 8.9.74 1.07 1.63 2.27 2.79 2.23 1.12-.05 1.54-.72 2.9-.72 1.35 0 1.73.72 2.9.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.34-.9-2.36-3.57ZM14.1 5.9c.61-.75 1.03-1.78.92-2.82-.88.04-1.96.59-2.6 1.33-.57.66-1.07 1.72-.94 2.73.99.08 2-.5 2.62-1.24Z"/></symbol>
+  </defs>
+</svg>
+<div id="app"><div class="state"><div class="dots"><i></i><i></i><i></i></div><div class="t">불러오는 중</div></div></div>
 <script>
 const FN = 'https://fvdihfmpjmgoffxosrmj.supabase.co/functions/v1/ddak-share/';
 const app = document.getElementById('app');
-// 스토어 아이콘. 텍스트 대신 이걸 넣는다.
-const STORE_ICON = {
-  play:
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 1.8a1.3 1.3 0 0 0-.5 1.05v18.3c0 .43.19.82.5 1.05L13.4 12 3.6 1.8Zm11.1 8.9L5.5 1.2l11.6 6.6-2.4 2.9Zm0 2.6 2.4 2.9-11.6 6.6 9.2-9.5Zm3.8-4.4 2.6 1.5c.87.5.87 1.75 0 2.25l-2.6 1.5L15.7 12l2.8-3.1Z"/></svg>',
-  ios:
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.3 12.8c0-2.2 1.8-3.3 1.9-3.35-1.04-1.52-2.65-1.73-3.22-1.75-1.37-.14-2.68.8-3.37.8-.7 0-1.77-.78-2.9-.76-1.5.02-2.88.87-3.65 2.2-1.55 2.7-.4 6.7 1.12 8.9.74 1.07 1.63 2.27 2.79 2.23 1.12-.05 1.54-.72 2.9-.72 1.35 0 1.73.72 2.9.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.34-.9-2.36-3.57ZM14.1 5.9c.61-.75 1.03-1.78.92-2.82-.88.04-1.96.59-2.6 1.33-.57.66-1.07 1.72-.94 2.73.99.08 2-.5 2.62-1.24Z"/></svg>',
-};
+
+// 사람 캡슐 색. 앱 PersonColors.pairs와 같은 순서 — 인원 순서대로 배정한다.
+const PERSON = [
+  ['#DCEBE6', '#0F5C4C'], ['#FBE6DE', '#A8432A'], ['#DFEAF4', '#2C5F86'], ['#EFE3F3', '#6E3F84'],
+  ['#F6ECDC', '#8A5A1C'], ['#E6E8EE', '#4A5060'], ['#F0E4E0', '#7A3F33'],
+];
+// 카테고리 막대. 앱 barPalette(잉크 → 라임 → 회색).
+const BARS = ['#14161A', '#D9F26A', '#C9CDD1', '#9AA1A8', '#E9E8E2'];
 
 const won = n => (n || 0).toLocaleString('ko-KR') + '원';
 const num = n => (n || 0).toLocaleString('ko-KR');
+const minus = n => (n ? '−' : '') + num(n);
 
-function state(emoji, title, body) {
-  app.innerHTML = `<div class="state"><div class="big">${emoji}</div>
-    <h2>${title}</h2><p>${body}</p><div class="brand">딱정산</div></div>`;
+function icon(id, size, cls) {
+  return `<svg class="ico ${cls || ''}" width="${size}" height="${size}" viewBox="0 0 ${id === 'm-a' ? 100 : 24} ${id === 'm-a' ? 100 : 24}" aria-hidden="true"><use href="#${id}"></use></svg>`;
 }
 
 function el(tag, cls, text) {
@@ -137,26 +200,50 @@ function el(tag, cls, text) {
   return n;
 }
 
+function brandRow() {
+  const r = el('div', 'brandrow');
+  r.innerHTML = icon('m-a', 26);
+  r.appendChild(el('span', 'wordmark', '딱정산'));
+  return r;
+}
+
+function state(title, body, code) {
+  const box = el('div', 'state');
+  box.innerHTML = icon('m-a', 44, 'logo');
+  box.appendChild(el('div', 't', title));
+  box.appendChild(el('div', 'd', body));
+  if (code) box.appendChild(el('div', 'c', code));
+  app.innerHTML = '';
+  app.append(box, brandRow());
+}
+
 // 항목 한 줄: 이름 · (메모) ······ 금액
-function line(title, note, amount, indent) {
-  const row = el('div', 'row' + (indent ? ' in' : ''));
+function line(title, note, amount, cls) {
+  const row = el('div', 'row' + (cls ? ' ' + cls : ''));
   row.appendChild(el('span', null, title));
   if (note) row.appendChild(el('span', 'note', note));
   row.appendChild(el('span', 'lead'));
-  row.appendChild(el('span', 'amt', num(amount)));
+  row.appendChild(el('span', 'amt num', amount));
   return row;
 }
 
+let colorOf = () => PERSON[0];
+function pill(name) {
+  const p = el('span', 'pill', name);
+  const [bg, fg] = colorOf(name);
+  p.style.background = bg;
+  p.style.color = fg;
+  return p;
+}
+
 /// 한 사람의 상세. 이름·금액만 보이고 항목은 눌러야 펴진다.
-function personBox(name, amountLabel, fill) {
-  const box = el('details', 'person-box');
+function personBox(name, amountLabel, tone, fill) {
+  const box = el('details', 'person');
+  box.dataset.name = name;
   const summary = el('summary');
-  summary.appendChild(el('span', null, name));
-  const right = el('span', 'amt');
-  right.appendChild(el('span', null, amountLabel));
-  right.appendChild(document.createTextNode(' '));
-  right.appendChild(el('span', 'caret', '▾'));
-  summary.appendChild(right);
+  summary.appendChild(pill(name));
+  summary.appendChild(el('span', 'amt num ' + tone, amountLabel));
+  summary.insertAdjacentHTML('beforeend', icon('i-down', 14, 'caret'));
   box.appendChild(summary);
   const body = el('div', 'body');
   fill(body);
@@ -164,134 +251,198 @@ function personBox(name, amountLabel, fill) {
   return box;
 }
 
+function transferCard(t) {
+  const box = el('div', 'send');
+  const top = el('div', 'top');
+  top.appendChild(pill(t.fromName));
+  top.insertAdjacentHTML('beforeend', icon('i-arrow', 14, 'arrow'));
+  top.appendChild(pill(t.toName));
+  top.appendChild(el('span', 'amt num', num(t.amount)));
+  box.appendChild(top);
+  if (t.account) {
+    const acc = el('div', 'acc');
+    acc.appendChild(el('span', null, t.account));
+    const btn = el('button', 'copy');
+    btn.type = 'button';
+    btn.innerHTML = icon('i-copy', 11);
+    const label = el('span', null, '복사');
+    btn.appendChild(label);
+    btn.onclick = () => {
+      navigator.clipboard.writeText(t.account);
+      label.textContent = '복사됨';
+      btn.classList.add('done');
+      setTimeout(() => { label.textContent = '복사'; btn.classList.remove('done'); }, 1200);
+    };
+    acc.appendChild(btn);
+    box.appendChild(acc);
+  }
+  return box;
+}
+
+// 이름 칩 선택은 이 기기에만 남긴다(링크마다 따로).
+function loadMe() { try { return localStorage.getItem('ddak-share-me:' + token) || ''; } catch (_) { return ''; } }
+function saveMe(v) { try { v ? localStorage.setItem('ddak-share-me:' + token, v) : localStorage.removeItem('ddak-share-me:' + token); } catch (_) {} }
+
 function render(data) {
   const s = data.snapshot;
+  const members = s.members || [];
   document.title = (s.title || '정산') + ' · 딱정산';
+  colorOf = name => {
+    const i = members.indexOf(name);
+    if (i >= 0) return PERSON[i % PERSON.length];
+    let h = 0;
+    for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) | 0;
+    return PERSON[Math.abs(h) % PERSON.length];
+  };
 
   const paper = el('div', 'paper');
+  paper.appendChild(brandRow());
   paper.appendChild(el('h1', null, s.title || '정산'));
+  const expenses = s.expenses || [];
   paper.appendChild(el('div', 'meta',
-    [s.date, s.groupName, (s.members || []).length + '명'].filter(Boolean).join('  ·  ')));
-  paper.appendChild(el('hr'));
+    [s.date, s.groupName, members.length + '명', expenses.length + '건'].filter(Boolean).join(' · ')));
+
+  const total = el('div', 'total');
+  total.appendChild(el('span', 'l', '합계'));
+  const tr = el('span', 'r num', num(s.total));
+  tr.appendChild(el('small', null, '원'));
+  total.appendChild(tr);
+  paper.appendChild(total);
+
+  const transfers = s.transfers || [];
+  if (transfers.length) {
+    const mc = el('div', 'mincount');
+    mc.append('최소 송금 · ', el('b', null, transfers.length + '건'), '이면 끝');
+    paper.appendChild(mc);
+  }
+
+  // 보낼 돈 — 합계 바로 아래. 이름을 고르면 내 송금만 남는다.
+  let people = [];
+  if (transfers.length) {
+    paper.appendChild(el('hr'));
+    const head = el('div', 'sechead');
+    head.appendChild(el('h2', null, '보낼 돈'));
+    const showChips = members.length > 1;
+    if (showChips) head.appendChild(el('span', 'hint', '내 이름 → 내 것만'));
+    paper.appendChild(head);
+
+    const list = el('div');
+    let me = loadMe();
+    if (me && !members.includes(me)) me = '';
+    const chips = el('div', 'chips');
+    const apply = () => {
+      [...chips.children].forEach(c => c.classList.toggle('on', c.dataset.name === me));
+      list.innerHTML = '';
+      const mine = transfers.filter(t => !me || t.fromName === me || t.toName === me);
+      mine.forEach((t, i) => {
+        const card = transferCard(t);
+        if (i === 0) card.classList.add('hero');
+        list.appendChild(card);
+      });
+      if (!mine.length) list.appendChild(el('div', 'empty', `${me} 님은 주고받을 돈이 없습니다`));
+      // 내 개인별 항목은 자동으로 펼친다.
+      people.forEach(d => (d.open = !!me && d.dataset.name === me));
+    };
+    if (showChips) {
+      ['', ...members].forEach(name => {
+        const c = el('button', 'chip', name || '전체');
+        c.type = 'button';
+        c.dataset.name = name;
+        c.onclick = () => { me = name; saveMe(me); apply(); };
+        chips.appendChild(c);
+      });
+      paper.appendChild(chips);
+    }
+    paper.appendChild(list);
+    // 개인별 상자를 만든 뒤에 적용한다.
+    queueMicrotask(apply);
+  }
 
   // 날짜별 결제 항목
+  paper.appendChild(el('hr'));
   paper.appendChild(el('h2', null, '결제 항목'));
   const groups = {};
-  (s.expenses || []).forEach(e => (groups[e.date || ''] ||= []).push(e));
+  expenses.forEach(e => (groups[e.date || ''] ||= []).push(e));
   Object.keys(groups)
     .sort((a, b) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b)))
     .forEach(k => {
       const sum = groups[k].reduce((t, e) => t + (e.amount || 0), 0);
       const head = el('div', 'date');
       head.appendChild(el('span', null, k || '날짜 없음'));
-      head.appendChild(el('span', null, num(sum)));
+      head.appendChild(el('span', 'num', num(sum)));
       paper.appendChild(head);
       groups[k].forEach(e => paper.appendChild(
         line(e.title || '이름 없는 항목',
              `${e.payerName} 결제 · ${e.count}명${e.foreign ? ' · ' + e.foreign : ''}`,
-             e.amount, false)));
+             num(e.amount))));
     });
-
-  paper.appendChild(el('hr'));
-  const total = el('div', 'total');
-  total.appendChild(el('span', 'l', '합계'));
-  total.appendChild(el('span', 'r', won(s.total)));
-  paper.appendChild(total);
-  paper.appendChild(el('hr'));
 
   // 타입(카테고리)별 — 어디에 얼마를 썼나, 비율까지.
   if ((s.categories || []).length) {
     paper.appendChild(el('hr'));
-    paper.appendChild(el('h2', null, '타입별'));
-    s.categories.forEach(c => {
+    paper.appendChild(el('h2', 'types', '타입별'));
+    s.categories.forEach((c, i) => {
       const box = el('div', 'cat');
       const top = el('div', 'top');
       top.appendChild(el('span', null, c.label));
-      top.appendChild(el('span', null,
-        `${Math.round((c.ratio || 0) * 100)}% · ${num(c.amount)}`));
+      top.appendChild(el('span', 'num', `${Math.round((c.ratio || 0) * 100)}% · ${num(c.amount)}`));
       box.appendChild(top);
       const bar = el('div', 'bar');
       const fill = el('i');
-      fill.style.width = `${Math.max(2, Math.round((c.ratio || 0) * 100))}%`;
+      fill.style.width = `${Math.max(2, (c.ratio || 0) * 100)}%`;
+      fill.style.background = BARS[i % BARS.length];
       bar.appendChild(fill);
       box.appendChild(bar);
       paper.appendChild(box);
     });
   }
 
-  // 보낼 돈
-  if ((s.transfers || []).length) {
-    paper.appendChild(el('h2', null, '보낼 돈'));
-    s.transfers.forEach(t => {
-      const box = el('div', 'send');
-      const top = el('div', 'top');
-      top.appendChild(el('span', null, `${t.fromName} → ${t.toName}`));
-      top.appendChild(el('span', null, won(t.amount)));
-      box.appendChild(top);
-      if (t.account) {
-        const acc = el('div', 'acc');
-        acc.appendChild(el('span', null, t.account));
-        const btn = el('button', null, '복사');
-        btn.onclick = () => {
-          navigator.clipboard.writeText(t.account);
-          btn.textContent = '복사됨';
-          setTimeout(() => (btn.textContent = '복사'), 1200);
-        };
-        acc.appendChild(btn);
-        box.appendChild(acc);
-      }
-      paper.appendChild(box);
-    });
-    if (!data.includeAccounts) {
-      paper.appendChild(el('div', 'foot', '계좌는 링크에 담지 않았습니다'));
-    }
-    paper.appendChild(el('hr'));
-  }
-
   // 개인별 낸 돈 — 누가 얼마를 대신 결제했나. 상세는 눌러야 펴진다.
   const payers = (s.balances || []).filter(b => (b.paidItems || []).length);
   if (payers.length) {
-    paper.appendChild(el('h2', null, '개인별 낸 돈'));
-    payers.forEach(b => paper.appendChild(
-      personBox(b.name, '낸 돈 ' + num(b.paid), body => {
-        b.paidItems.forEach(i =>
-          body.appendChild(line(i.title || '이름 없는 항목', '', i.amount, true)));
-      })));
     paper.appendChild(el('hr'));
+    paper.appendChild(el('h2', 'people', '개인별 낸 돈'));
+    payers.forEach(b => paper.appendChild(
+      personBox(b.name, '낸 돈 ' + num(b.paid), '', body => {
+        b.paidItems.forEach(i =>
+          body.appendChild(line(i.title || '이름 없는 항목', '', num(i.amount), 'in')));
+      })));
   }
 
   // 개인별 내는 돈 — 맨 마지막. 각자 자기 것만 펴 본다.
-  paper.appendChild(el('h2', null, '개인별 내는 돈'));
-  (s.balances || []).forEach(b => paper.appendChild(
-    personBox(b.name, '낼 돈 ' + num(b.owed), body => {
+  paper.appendChild(el('hr'));
+  paper.appendChild(el('h2', 'people', '개인별 내는 돈'));
+  (s.balances || []).forEach(b => {
+    const net = b.net || 0;
+    const label = net > 0 ? '받을 ' + num(net) : net < 0 ? '보낼 ' + num(-net) : '정산 완료';
+    const box = personBox(b.name, label, net > 0 ? 'pos' : net < 0 ? 'neg' : 'zero', body => {
       (b.items || []).filter(i => i.amount !== 0).forEach(i =>
-        body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', i.amount, true)));
-      if (b.paid) {
-        const paid = line('낸 돈', '', -b.paid, true);
-        paid.style.color = '#8A8A8A';
-        body.appendChild(paid);
-      }
-      if (b.prepaid) {
-        const pre = line('미리 낸 회비', '', -b.prepaid, true);
-        pre.style.color = '#8A8A8A';
-        body.appendChild(pre);
-      }
-      const net = el('div', 'net');
-      net.appendChild(el('span', null, b.net > 0 ? '받을 돈' : b.net < 0 ? '보낼 돈' : '정산 완료'));
-      net.appendChild(el('span', null, won(Math.abs(b.net || 0))));
-      body.appendChild(net);
-    })));
+        body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', num(i.amount), 'in')));
+      if (b.paid) body.appendChild(line('낸 돈', '', minus(b.paid), 'in sub'));
+      if (b.prepaid) body.appendChild(line('미리 낸 회비', '', minus(b.prepaid), 'in sub'));
+    });
+    people.push(box);
+    paper.appendChild(box);
+  });
 
   const days = Math.max(0,
     Math.ceil((new Date(data.expiresAt) - Date.now()) / 86400000));
   // 앱에서 정산을 고치면 같은 링크 내용이 바뀐다. 언제 기준인지 보여 준다.
-  const updated = s.updatedAt ? `${s.updatedAt} 기준 · ` : '';
-  paper.appendChild(el('div', 'foot', `${updated}이 링크는 ${days}일 뒤 만료됩니다`));
-  paper.appendChild(el('div', 'brand', '딱정산'));
+  paper.appendChild(el('hr'));
+  const foot = el('div', 'foot');
+  foot.append(`${s.updatedAt ? s.updatedAt + ' 기준 · ' : ''}${days}일 뒤 만료`, el('br'),
+    data.includeAccounts ? '계좌는 만든 사람이 켰을 때만 담깁니다' : '계좌는 링크에 담지 않았습니다');
+  paper.appendChild(foot);
+  const bc = el('div', 'barcode');
+  bc.appendChild(el('span'));
+  paper.appendChild(bc);
+  const year = (s.date || s.updatedAt || String(new Date().getFullYear())).slice(0, 4);
+  paper.appendChild(el('div', 'tag',
+    `DDAK · ${year} · #${(s.title || '정산').replace(/\s+/g, '')}`));
 
   app.innerHTML = '';
   app.appendChild(paper);
-  app.appendChild(ad());
+  app.appendChild(el('div', 'ad', 'AD · 320×100'));
   app.appendChild(promo());
   const list = apps(data.apps);
   if (list) app.appendChild(list);
@@ -305,16 +456,17 @@ function apps(rows) {
   box.appendChild(el('div', 't', '이런 앱도 만들고 있습니다'));
   rows.forEach(a => {
     const row = el('div', 'app');
+    const initial = () => el('div', 'no', (a.name_ko || '?')[0]);
     if (a.icon_url) {
       const img = el('img');
       img.src = a.icon_url;
       img.alt = '';
       img.loading = 'lazy';
       // 아이콘을 못 불러오면 첫 글자로 대신한다.
-      img.onerror = () => img.replaceWith(el('div', 'no', (a.name_ko || '?')[0]));
+      img.onerror = () => img.replaceWith(initial());
       row.appendChild(img);
     } else {
-      row.appendChild(el('div', 'no', (a.name_ko || '?')[0]));
+      row.appendChild(initial());
     }
 
     const txt = el('div', 'txt');
@@ -324,9 +476,9 @@ function apps(rows) {
 
     const links = el('div', 'links');
     [
-      [a.android_url, 'p', 'play', 'Google Play'],
-      [a.ios_url, 'i', 'ios', 'App Store'],
-    ].forEach(([href, cls, icon, label]) => {
+      [a.android_url, 'p', 'i-play', 'Google Play'],
+      [a.ios_url, 'i', 'i-apple', 'App Store'],
+    ].forEach(([href, cls, ic, label]) => {
       if (!href) return;
       const link = el('a', cls);
       link.href = href;
@@ -334,7 +486,7 @@ function apps(rows) {
       link.rel = 'noopener noreferrer';
       link.title = label;
       link.setAttribute('aria-label', `${a.name_ko || a.id} · ${label}`);
-      link.innerHTML = STORE_ICON[icon];
+      link.innerHTML = icon(ic, 14);
       links.appendChild(link);
     });
     if (links.children.length) row.appendChild(links);
@@ -346,15 +498,21 @@ function apps(rows) {
 /// 앱 설치 배너. 아직 스토어 주소가 없어서 누르면 안내만 띄운다.
 function promo() {
   const box = el('div', 'promo');
-  box.appendChild(el('div', 't', '정산은 딱정산으로'));
-  box.appendChild(el('div', 'd',
-    '결제 항목만 넣으면 누가 누구에게 얼마를 보낼지 알아서 계산합니다.'));
+  const head = el('div', 'head');
+  head.innerHTML = icon('m-a', 42);
+  const txt = el('div');
+  txt.appendChild(el('div', 't', '다음 정산은 딱정산으로'));
+  txt.appendChild(el('div', 'd', '쓴 돈만 적으면 누가 누구에게 얼마, 계좌까지.'));
+  head.appendChild(txt);
+  box.appendChild(head);
 
   const row = el('div', 'stores');
   const note = el('div', 'soon');
-  [['Google Play', ''], ['App Store', 'alt']].forEach(([name, cls]) => {
+  [['Google Play', '', 'i-play'], ['App Store', 'alt', 'i-apple']].forEach(([name, cls, ic]) => {
     const btn = el('button', 'store' + (cls ? ' ' + cls : ''));
-    btn.appendChild(el('span', null, name + '에서 받기'));
+    btn.type = 'button';
+    btn.innerHTML = icon(ic, 14);
+    btn.appendChild(el('span', null, name));
     btn.onclick = () => {
       note.textContent = '출시 준비 중입니다';
       setTimeout(() => (note.textContent = ''), 1800);
@@ -366,31 +524,26 @@ function promo() {
   return box;
 }
 
-/// 광고 자리.
-function ad() {
-  return el('div', 'ad', 'AD');
-}
-
 // 토큰은 해시로 받는다 — 그래야 서버 로그에 남지 않는다.
 const token = (location.hash || '').replace(/^#/, '').trim()
   || new URLSearchParams(location.search).get('t') || '';
 
 if (!token) {
-  state('🔗', '링크가 올바르지 않습니다', '정산을 만든 사람에게 링크를 다시 받아 주세요.');
+  state('링크가 올바르지 않습니다', '정산을 만든 사람에게 링크를 다시 받아 주세요.');
 } else {
   fetch(FN + encodeURIComponent(token))
     .then(async r => {
       const body = await r.json().catch(() => ({}));
       if (r.ok) return render(body);
       if (r.status === 410) {
-        state('⏳', '링크가 만료되었습니다', '정산을 만든 사람에게 새 링크를 받아 주세요.');
+        state('링크가 만료되었습니다', '정산을 만든 사람에게 새 링크를 받아 주세요.', '410');
       } else if (r.status === 404) {
-        state('🧾', '정산을 찾을 수 없습니다', '링크가 취소되었거나 주소가 잘못되었습니다.');
+        state('정산을 찾을 수 없습니다', '링크가 취소되었거나 주소가 잘못되었습니다.', '404');
       } else {
-        state('⚠️', '불러오지 못했습니다', '잠시 뒤 다시 열어 주세요.');
+        state('불러오지 못했습니다', '잠시 뒤 다시 열어 주세요.');
       }
     })
-    .catch(() => state('⚠️', '불러오지 못했습니다', '인터넷 연결을 확인해 주세요.'));
+    .catch(() => state('불러오지 못했습니다', '인터넷 연결을 확인해 주세요.'));
 }
 </script>
 </body>
