@@ -96,6 +96,14 @@
 
   /* 타입별 */
   h2.types{margin-bottom:6px}
+  /* 카테고리 아이콘 — 앱과 같은 옅은 색 타일 + 잉크 선 아이콘 */
+  .cico{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;
+        margin-right:6px;vertical-align:-3px;font-size:11px;line-height:1;flex:none;background:var(--hair)}
+  .cico svg{display:block}
+  .accs{margin-top:10px;border:1.5px solid var(--line);border-radius:14px;padding:4px 14px}
+  .accs .accrow{display:flex;align-items:center;gap:8px;padding:9px 0;font-size:13px}
+  .accs .accrow+.accrow{border-top:1px solid var(--hair)}
+  .accs .accrow>span.v{flex:1;min-width:0;overflow-wrap:anywhere;font-family:var(--mono);font-size:12.5px}
   .cat{margin:8px 0 4px;font-family:var(--mono);font-size:13px}
   .cat .top{display:flex;justify-content:space-between;gap:8px}
   .cat .top span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -217,10 +225,44 @@ function state(title, body, code) {
   app.append(box, brandRow());
 }
 
-// 항목 한 줄: 이름 · (메모) ······ 금액
-function line(title, note, amount, cls) {
+// 카테고리 id → {name, color, icon(path), emoji}. 스냅샷이 싣고 온다(없으면 아이콘 없이).
+let STYLES = {};
+const SVGNS = 'http://www.w3.org/2000/svg';
+const hexOk = c => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c);
+function cico(id) {
+  const st = id && STYLES[id];
+  if (!st) return null;
+  const c = el('span', 'cico');
+  if (hexOk(st.color)) c.style.background = st.color + '2E';
+  if (st.icon) {
+    // innerHTML 대신 DOM으로 — 링크 내용은 남이 만든 데이터다.
+    const svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '12');
+    svg.setAttribute('height', '12');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', '#14161A');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    const path = document.createElementNS(SVGNS, 'path');
+    path.setAttribute('d', String(st.icon));
+    svg.appendChild(path);
+    c.appendChild(svg);
+  } else {
+    c.textContent = st.emoji || '·';
+  }
+  return c;
+}
+
+// 항목 한 줄: [아이콘] 이름 · (메모) ······ 금액
+function line(title, note, amount, cls, catId) {
   const row = el('div', 'row' + (cls ? ' ' + cls : ''));
-  row.appendChild(el('span', null, title));
+  const t = el('span');
+  const ic = cico(catId);
+  if (ic) t.appendChild(ic);
+  t.append(title);
+  row.appendChild(t);
   if (note) row.appendChild(el('span', 'note', note));
   row.appendChild(el('span', 'lead'));
   row.appendChild(el('span', 'amt num', amount));
@@ -251,7 +293,7 @@ function personBox(name, amountLabel, tone, fill) {
   return box;
 }
 
-function transferCard(t) {
+function transferCard(t, perTransferAccount) {
   const box = el('div', 'send');
   const top = el('div', 'top');
   top.appendChild(pill(t.fromName));
@@ -259,7 +301,7 @@ function transferCard(t) {
   top.appendChild(pill(t.toName));
   top.appendChild(el('span', 'amt num', num(t.amount)));
   box.appendChild(top);
-  if (t.account) {
+  if (perTransferAccount && t.account) {
     const acc = el('div', 'acc');
     acc.appendChild(el('span', null, t.account));
     const btn = el('button', 'copy');
@@ -286,6 +328,9 @@ function saveMe(v) { try { v ? localStorage.setItem('ddak-share-me:' + token, v)
 function render(data) {
   const s = data.snapshot;
   const members = s.members || [];
+  STYLES = (s.categoryStyles && typeof s.categoryStyles === 'object') ? s.categoryStyles : {};
+  // 새 앱은 계좌를 사람마다 한 번(accounts)만 싣는다. 예전 링크는 송금마다 붙어 온다.
+  const accounts = Array.isArray(s.accounts) ? s.accounts : null;
   document.title = (s.title || '정산') + ' · 딱정산';
   colorOf = name => {
     const i = members.indexOf(name);
@@ -335,7 +380,7 @@ function render(data) {
       list.innerHTML = '';
       const mine = transfers.filter(t => !me || t.fromName === me || t.toName === me);
       mine.forEach((t, i) => {
-        const card = transferCard(t);
+        const card = transferCard(t, !accounts);
         if (i === 0) card.classList.add('hero');
         list.appendChild(card);
       });
@@ -354,6 +399,33 @@ function render(data) {
       paper.appendChild(chips);
     }
     paper.appendChild(list);
+    // 계좌 — 받는 사람마다 한 줄씩, 송금 목록과 따로.
+    if (accounts && accounts.length) {
+      const box = el('div', 'accs');
+      accounts.forEach(a => {
+        const row = el('div', 'accrow');
+        row.appendChild(pill(a.name));
+        row.appendChild(el('span', 'v', a.account));
+        const btn = el('button', 'copy');
+        btn.type = 'button';
+        btn.innerHTML = icon('i-copy', 11);
+        const label = el('span', null, '복사');
+        btn.appendChild(label);
+        btn.onclick = () => {
+          navigator.clipboard.writeText(a.account);
+          label.textContent = '복사됨';
+          btn.classList.add('done');
+          setTimeout(() => { label.textContent = '복사'; btn.classList.remove('done'); }, 1200);
+        };
+        row.appendChild(btn);
+        box.appendChild(row);
+      });
+      const head2 = el('div', 'sechead');
+      head2.style.marginTop = '14px';
+      head2.appendChild(el('h2', null, '계좌'));
+      paper.appendChild(head2);
+      paper.appendChild(box);
+    }
     // 개인별 상자를 만든 뒤에 적용한다.
     queueMicrotask(apply);
   }
@@ -374,7 +446,7 @@ function render(data) {
       groups[k].forEach(e => paper.appendChild(
         line(e.title || '이름 없는 항목',
              `${e.payerName} 결제 · ${e.count}명${e.foreign ? ' · ' + e.foreign : ''}`,
-             num(e.amount))));
+             num(e.amount), null, e.categoryId)));
     });
 
   // 타입(카테고리)별 — 어디에 얼마를 썼나, 비율까지.
@@ -384,13 +456,18 @@ function render(data) {
     s.categories.forEach((c, i) => {
       const box = el('div', 'cat');
       const top = el('div', 'top');
-      top.appendChild(el('span', null, c.label));
+      const lab = el('span');
+      const ic = cico(c.categoryId);
+      if (ic) lab.appendChild(ic);
+      lab.append(c.label);
+      top.appendChild(lab);
       top.appendChild(el('span', 'num', `${Math.round((c.ratio || 0) * 100)}% · ${num(c.amount)}`));
       box.appendChild(top);
       const bar = el('div', 'bar');
       const fill = el('i');
       fill.style.width = `${Math.max(2, (c.ratio || 0) * 100)}%`;
-      fill.style.background = BARS[i % BARS.length];
+      const st = STYLES[c.categoryId];
+      fill.style.background = st && hexOk(st.color) ? st.color : BARS[i % BARS.length];
       bar.appendChild(fill);
       box.appendChild(bar);
       paper.appendChild(box);
@@ -417,7 +494,7 @@ function render(data) {
     const label = net > 0 ? '받을 ' + num(net) : net < 0 ? '보낼 ' + num(-net) : '정산 완료';
     const box = personBox(b.name, label, net > 0 ? 'pos' : net < 0 ? 'neg' : 'zero', body => {
       (b.items || []).filter(i => i.amount !== 0).forEach(i =>
-        body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', num(i.amount), 'in')));
+        body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', num(i.amount), 'in', i.categoryId)));
       if (b.paid) body.appendChild(line('낸 돈', '', minus(b.paid), 'in sub'));
       if (b.prepaid) body.appendChild(line('미리 낸 회비', '', minus(b.prepaid), 'in sub'));
     });
