@@ -584,13 +584,13 @@ function render(data) {
     const box = personBox(b.name, label, net > 0 ? 'pos' : net < 0 ? 'neg' : 'zero', body => {
       (b.items || []).filter(i => i.amount !== 0).forEach(i =>
         body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', num(i.amount), 'in', i.categoryId)));
-      // 이 사람이 실제로 져야 할 몫. 항목 합에 조정·단위 맞추기까지 더한 값이다.
-      if (b.owed !== undefined) body.appendChild(line('부담액', '', num(b.owed), 'in sum'));
-      // 1/n에서 옮긴 금액과 단위 맞추기 차액 — 왜 금액이 딱 1/n이 아닌지 보여 준다.
+      // 항목 → 조정 → 단위 → 합계(부담액) 순. 더하고 빼는 과정을 먼저 보여 준다.
       if (b.adjust) body.appendChild(
         line('개인 조정', b.adjust > 0 ? '더 냄' : '덜 냄', signed(b.adjust), 'in sub'));
       if (b.rounding) body.appendChild(
         line(s.rounding || '단위 맞추기', b.rounding > 0 ? '더 냄' : '덜 냄', signed(b.rounding), 'in sub'));
+      // 이 사람이 실제로 져야 할 몫. 위 항목·조정·단위를 모두 더한 값이다.
+      if (b.owed !== undefined) body.appendChild(line('부담액', '', num(b.owed), 'in sum'));
       if (b.paid) body.appendChild(line('낸 돈', '', minus(b.paid), 'in sub'));
       if (b.prepaid) body.appendChild(line('미리 낸 회비', '', minus(b.prepaid), 'in sub'));
     });
