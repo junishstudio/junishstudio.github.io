@@ -601,10 +601,12 @@ function render(data) {
 
   const days = Math.max(0,
     Math.ceil((new Date(data.expiresAt) - Date.now()) / 86400000));
+  // 홍보용처럼 아주 먼 만료일은 날수를 세는 게 무의미하다.
+  const expiry = days > 365 ? '만료 없음' : `${days}일 뒤 만료`;
   // 앱에서 정산을 고치면 같은 링크 내용이 바뀐다. 언제 기준인지 보여 준다.
   paper.appendChild(el('hr'));
   const foot = el('div', 'foot');
-  foot.append(`${s.updatedAt ? s.updatedAt + ' 기준 · ' : ''}${days}일 뒤 만료`, el('br'),
+  foot.append(`${s.updatedAt ? s.updatedAt + ' 기준 · ' : ''}${expiry}`, el('br'),
     data.includeAccounts ? '계좌는 만든 사람이 켰을 때만 담깁니다' : '계좌는 링크에 담지 않았습니다');
   paper.appendChild(foot);
   const bc = el('div', 'barcode');
