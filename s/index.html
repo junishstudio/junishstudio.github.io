@@ -165,6 +165,13 @@
   .app .links a{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
                 background:var(--track);color:var(--ink)}
   .app .links a.p{background:var(--ink);color:#fff}
+  /* 아직 그 스토어에 없는 앱 — 자리는 두고 눌리면 안내만 */
+  .app .links button{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                background:var(--track);color:var(--ink);border:0;opacity:.35;cursor:default;padding:0}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9;
+         background:var(--ink);color:#fff;font-size:13px;padding:10px 16px;border-radius:999px;
+         box-shadow:0 6px 20px rgba(0,0,0,.18);opacity:0;transition:opacity .2s}
+  .toast.on{opacity:1}
 
   /* 상태 화면 — 만료 · 없음 · 로딩 */
   .state{max-width:340px;margin:72px auto 0;background:#fff;border-radius:18px;padding:22px 16px;text-align:center}
@@ -206,6 +213,21 @@ const BARS = ['#14161A', '#D9F26A', '#C9CDD1', '#9AA1A8', '#E9E8E2'];
 const won = n => (n || 0).toLocaleString('ko-KR') + '원';
 const num = n => (n || 0).toLocaleString('ko-KR');
 const minus = n => (n ? '−' : '') + num(n);
+// 부호를 항상 붙인다. +1,000 / −1,000
+let toastTimer = 0;
+function toast(text) {
+  let box = document.querySelector('.toast');
+  if (!box) {
+    box = el('div', 'toast');
+    document.body.appendChild(box);
+  }
+  box.textContent = text;
+  requestAnimationFrame(() => box.classList.add('on'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => box.classList.remove('on'), 2200);
+}
+
+const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + num(Math.abs(n));
 
 function icon(id, size, cls) {
   return `<svg class="ico ${cls || ''}" width="${size}" height="${size}" viewBox="0 0 ${id === 'm-a' ? 100 : 24} ${id === 'm-a' ? 100 : 24}" aria-hidden="true"><use href="#${id}"></use></svg>`;
@@ -356,6 +378,9 @@ function render(data) {
   const expenses = s.expenses || [];
   paper.appendChild(el('div', 'meta',
     [s.date, s.groupName, members.length + '명', expenses.length + '건'].filter(Boolean).join(' · ')));
+  // 어떻게 계산했는지 — 송금 방식과 단위 맞추기.
+  const how = [s.strategy, s.rounding].filter(Boolean).join(' · ');
+  if (how) paper.appendChild(el('div', 'meta', how));
 
   const total = el('div', 'total');
   total.appendChild(el('span', 'l', '합계'));
@@ -367,7 +392,7 @@ function render(data) {
   const transfers = s.transfers || [];
   if (transfers.length) {
     const mc = el('div', 'mincount');
-    mc.append('최소 송금 · ', el('b', null, transfers.length + '건'), '이면 끝');
+    mc.append((s.strategy || '최소 송금') + ' · ', el('b', null, transfers.length + '건'), '이면 끝');
     paper.appendChild(mc);
   }
 
@@ -501,6 +526,11 @@ function render(data) {
     const box = personBox(b.name, label, net > 0 ? 'pos' : net < 0 ? 'neg' : 'zero', body => {
       (b.items || []).filter(i => i.amount !== 0).forEach(i =>
         body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', num(i.amount), 'in', i.categoryId)));
+      // 1/n에서 옮긴 금액과 단위 맞추기 차액 — 왜 금액이 딱 1/n이 아닌지 보여 준다.
+      if (b.adjust) body.appendChild(
+        line('개인 조정', b.adjust > 0 ? '더 냄' : '덜 냄', signed(b.adjust), 'in sub'));
+      if (b.rounding) body.appendChild(
+        line(s.rounding || '단위 맞추기', b.rounding > 0 ? '더 냄' : '덜 냄', signed(b.rounding), 'in sub'));
       if (b.paid) body.appendChild(line('낸 돈', '', minus(b.paid), 'in sub'));
       if (b.prepaid) body.appendChild(line('미리 낸 회비', '', minus(b.prepaid), 'in sub'));
     });
@@ -563,7 +593,17 @@ function apps(rows) {
       [a.android_url, 'p', 'i-play', 'Google Play'],
       [a.ios_url, 'i', 'i-apple', 'App Store'],
     ].forEach(([href, cls, ic, label]) => {
-      if (!href) return;
+      if (!href) {
+        // 아직 그 스토어엔 없다 — 아이콘 자리는 두고 눌리면 안내만.
+        const off = el('button');
+        off.type = 'button';
+        off.title = `${label}에는 아직 없습니다`;
+        off.setAttribute('aria-label', `${a.name_ko || a.id} · ${label}에는 아직 없습니다`);
+        off.innerHTML = icon(ic, 14);
+        off.onclick = () => toast(`${a.name_ko || a.id} · ${label}에는 아직 등록되지 않았습니다`);
+        links.appendChild(off);
+        return;
+      }
       const link = el('a', cls);
       link.href = href;
       link.target = '_blank';
@@ -573,7 +613,7 @@ function apps(rows) {
       link.innerHTML = icon(ic, 14);
       links.appendChild(link);
     });
-    if (links.children.length) row.appendChild(links);
+    row.appendChild(links);
     box.appendChild(row);
   });
   return box;
