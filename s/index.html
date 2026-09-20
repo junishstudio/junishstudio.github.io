@@ -184,6 +184,18 @@
   .state .d{margin-top:4px;font-size:12.5px;color:var(--sub);line-height:1.5}
   .state .c{margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--muted)}
   .state + .brandrow{margin-top:18px}
+  .adsense{max-width:480px;margin:14px auto 0;min-height:1px;overflow:hidden}
+  /* 불러오는 동안에도 영수증 모양 그대로 — 내용만 회색 자리 */
+  .paper.loading .sk{background:var(--track);border-radius:6px;animation:sk 1.2s ease-in-out infinite}
+  .paper.loading .sk-title{height:26px;width:52%;margin:16px auto 0}
+  .paper.loading .sk-meta{height:13px;width:70%;margin:10px auto 0}
+  .paper.loading .sk-total{height:30px;width:100%;margin:18px 0 0}
+  .paper.loading .sk-line{height:14px;width:100%;margin-top:12px}
+  .paper.loading .sk-line.short{width:60%}
+  .paper.loading .loadtext{margin-top:20px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  @keyframes sk{0%,100%{opacity:.55}50%{opacity:1}}
+  /* 개인별 상자 안 '부담액' 줄 — 항목 합계라 조금 진하게 */
+  .row.sum{font-weight:700}
 </style>
 </head>
 <body>
@@ -197,9 +209,55 @@
     <symbol id="i-apple" viewBox="0 0 24 24"><path fill="currentColor" d="M16.3 12.8c0-2.2 1.8-3.3 1.9-3.35-1.04-1.52-2.65-1.73-3.22-1.75-1.37-.14-2.68.8-3.37.8-.7 0-1.77-.78-2.9-.76-1.5.02-2.88.87-3.65 2.2-1.55 2.7-.4 6.7 1.12 8.9.74 1.07 1.63 2.27 2.79 2.23 1.12-.05 1.54-.72 2.9-.72 1.35 0 1.73.72 2.9.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.34-.9-2.36-3.57ZM14.1 5.9c.61-.75 1.03-1.78.92-2.82-.88.04-1.96.59-2.6 1.33-.57.66-1.07 1.72-.94 2.73.99.08 2-.5 2.62-1.24Z"/></symbol>
   </defs>
 </svg>
-<div id="app"><div class="state"><div class="dots"><i></i><i></i><i></i></div><div class="t">불러오는 중</div></div></div>
+<div id="app"><div class="paper loading">
+  <div class="brandrow"><svg class="ico" width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><use href="#m-a"></use></svg><span class="wordmark">딱정산</span></div>
+  <div class="sk sk-title"></div>
+  <div class="sk sk-meta"></div>
+  <div class="sk sk-total"></div>
+  <div class="sk sk-line"></div>
+  <div class="sk sk-line"></div>
+  <div class="sk sk-line short"></div>
+  <div class="loadtext">영수증을 불러오는 중</div>
+</div></div>
 <script>
 const FN = 'https://fvdihfmpjmgoffxosrmj.supabase.co/functions/v1/ddak-share/';
+
+/// 애드센스 게시자 ID(ca-pub-…). 비어 있으면 광고 자리는 Junish 앱 하우스 광고가 채운다.
+/// 계정 승인 뒤 이 값과 SLOT만 채우면 바로 켜진다.
+const ADSENSE_CLIENT = '';
+const ADSENSE_SLOT = '';
+
+/// 승인된 계정이 있을 때만 애드센스 스크립트를 싣는다(없으면 요청조차 하지 않는다).
+function adsenseBox() {
+  if (!ADSENSE_CLIENT || !ADSENSE_SLOT) return null;
+  if (!document.querySelector('script[data-adsense]')) {
+    const tag = document.createElement('script');
+    tag.async = true;
+    tag.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' +
+      encodeURIComponent(ADSENSE_CLIENT);
+    tag.crossOrigin = 'anonymous';
+    tag.setAttribute('data-adsense', '1');
+    document.head.appendChild(tag);
+  }
+  const box = el('div', 'adsense');
+  const ins = document.createElement('ins');
+  ins.className = 'adsbygoogle';
+  ins.style.display = 'block';
+  ins.setAttribute('data-ad-client', ADSENSE_CLIENT);
+  ins.setAttribute('data-ad-slot', ADSENSE_SLOT);
+  ins.setAttribute('data-ad-format', 'auto');
+  ins.setAttribute('data-full-width-responsive', 'true');
+  box.appendChild(ins);
+  // 자리가 화면에 붙은 뒤에 채우라고 알린다.
+  requestAnimationFrame(() => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (_) {
+      // 차단기·네트워크 실패는 조용히 넘긴다 — 본문은 그대로 보인다.
+    }
+  });
+  return box;
+}
 const app = document.getElementById('app');
 
 // 사람 캡슐 색. 앱 PersonColors.pairs와 같은 순서 — 인원 순서대로 배정한다.
@@ -526,6 +584,8 @@ function render(data) {
     const box = personBox(b.name, label, net > 0 ? 'pos' : net < 0 ? 'neg' : 'zero', body => {
       (b.items || []).filter(i => i.amount !== 0).forEach(i =>
         body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', num(i.amount), 'in', i.categoryId)));
+      // 이 사람이 실제로 져야 할 몫. 항목 합에 조정·단위 맞추기까지 더한 값이다.
+      if (b.owed !== undefined) body.appendChild(line('부담액', '', num(b.owed), 'in sum'));
       // 1/n에서 옮긴 금액과 단위 맞추기 차액 — 왜 금액이 딱 1/n이 아닌지 보여 준다.
       if (b.adjust) body.appendChild(
         line('개인 조정', b.adjust > 0 ? '더 냄' : '덜 냄', signed(b.adjust), 'in sub'));
@@ -555,7 +615,7 @@ function render(data) {
 
   app.innerHTML = '';
   app.appendChild(paper);
-  const ad = houseAd(data.apps);
+  const ad = adsenseBox() || houseAd(data.apps);
   if (ad) app.appendChild(ad);
   app.appendChild(promo());
   const list = apps(data.apps);
