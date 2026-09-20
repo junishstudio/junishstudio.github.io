@@ -1,31 +1,155 @@
 <!doctype html>
 <html lang="ko">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Junish</title>
+<title>Junish — 기록을 남기는 앱을 만듭니다</title>
+<meta name="description" content="독서·관람·일기·기념일·정산. 매일 쓰는 작은 기록 앱을 만드는 1인 개발 스튜디오 Junish입니다.">
+<meta property="og:title" content="Junish — 기록을 남기는 앱">
+<meta property="og:description" content="독서·관람·일기·기념일·정산. 매일 쓰는 작은 기록 앱.">
+<meta property="og:type" content="website">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7554737322558391" crossorigin="anonymous"></script>
 <style>
-  :root { color-scheme: light dark; }
-  body { margin:0; min-height:100vh; display:grid; place-items:center;
-         font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
-         background:#F7F6F4; color:#16150F; }
-  @media (prefers-color-scheme: dark) { body { background:#16150F; color:#F7F6F4; } }
-  main { max-width:34rem; padding:2rem 1.5rem; }
-  h1 { font-size:1.6rem; margin:0 0 .5rem; letter-spacing:-.01em; }
-  p { margin:.4rem 0 1.6rem; opacity:.72; }
-  ul { list-style:none; padding:0; margin:0; }
-  li { padding:.55rem 0; border-top:1px solid color-mix(in srgb, currentColor 14%, transparent); }
+  :root { color-scheme: light dark; --bg:#F7F6F4; --ink:#16150F; --sub:#5B5A54; --line:#E4E2DC; --card:#FFFFFF; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16150F; --ink:#F7F6F4; --sub:#A8A69E; --line:#2C2B25; --card:#1E1D18; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif; }
+  .wrap { max-width:44rem; margin:0 auto; padding:3rem 1.25rem 4rem; }
+  header p { color:var(--sub); margin:.6rem 0 0; }
+  h1 { font-size:2rem; margin:0; letter-spacing:-.02em; }
+  h2 { font-size:1.2rem; margin:2.75rem 0 .75rem; letter-spacing:-.01em; }
+  h3 { font-size:1rem; margin:0; }
+  .lead { font-size:1.05rem; }
+  .app { display:flex; gap:.9rem; align-items:flex-start; padding:1rem;
+         background:var(--card); border:1px solid var(--line); border-radius:14px; margin-bottom:.75rem; }
+  .app img { width:52px; height:52px; border-radius:12px; flex:none; background:var(--line); }
+  .app .no { width:52px; height:52px; border-radius:12px; flex:none; background:var(--line);
+             display:grid; place-items:center; font-weight:700; color:var(--sub); }
+  .app p { margin:.25rem 0 .5rem; color:var(--sub); font-size:.94rem; }
+  .links { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .links a { display:inline-flex; align-items:center; gap:.35rem; font-size:.85rem;
+             text-decoration:none; padding:.35rem .7rem; border-radius:999px;
+             border:1px solid var(--line); background:var(--bg); white-space:nowrap; }
+  .links a svg { width:14px; height:14px; fill:currentColor; }
+  .faq dt { font-weight:700; margin-top:1.1rem; }
+  .faq dd { margin:.25rem 0 0; color:var(--sub); }
+  footer { margin-top:3rem; padding-top:1.25rem; border-top:1px solid var(--line);
+           color:var(--sub); font-size:.9rem; }
+  footer a { color:inherit; }
   a { color:inherit; }
-  small { display:block; margin-top:2rem; opacity:.5; }
 </style>
-<main>
+</head>
+<body>
+<div class="wrap">
+
+<header>
   <h1>Junish</h1>
-  <p>기록하고, 기다리고, 다시 꺼내 보는 앱을 만듭니다.</p>
-  <ul>
-    <li><strong>틸데이</strong> — 디데이·기념일을 홈 화면 위젯과 당일 알림으로</li>
-    <li><strong>갈피</strong> — 읽은 책과 문장을 남기는 독서 기록</li>
-    <li><strong>데이노트</strong> — 하루 한 줄, 스티커로 꾸미는 일기</li>
-    <li><strong>티킵</strong> — 공연·전시 관람 기록 아카이브</li>
-  </ul>
-  <small>문의 <a href="mailto:junish.contact@gmail.com">junish.contact@gmail.com</a></small>
-</main>
+  <p class="lead">읽은 것, 본 것, 지낸 하루. 남겨 두면 언젠가 다시 꺼내 보게 되는 것들을 기록하는 앱을 만듭니다.</p>
+</header>
+
+<h2>만들고 있는 앱</h2>
+
+<div class="app">
+  <img src="https://play-lh.googleusercontent.com/x3yrcnT947IkSESaFTHCvOkHYPJ4Pn3e4cESyQVxD2RzcBzwBpiZWcfKg4aLIOeK3dzVwoUB0XPsg8aw0Xp-=s128" alt="갈피 아이콘" loading="lazy" width="52" height="52">
+  <div>
+    <h3>갈피 — 독서 기록</h3>
+    <p>읽은 책과 마음에 남은 문장을 모아 둡니다. 바코드로 책을 찾아 담고, 읽은 날짜와 진도를 남기고, 한 해 동안 읽은 책을 통계로 돌아봅니다. 로그인하면 폰을 바꿔도 기록이 따라옵니다.</p>
+    <div class="links">
+      <a href="https://play.google.com/store/apps/details?id=com.junish.galpi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 1.8a1.3 1.3 0 0 0-.5 1.05v18.3c0 .43.19.82.5 1.05L13.4 12 3.6 1.8Zm11.1 8.9L5.5 1.2l11.6 6.6-2.4 2.9Zm0 2.6 2.4 2.9-11.6 6.6 9.2-9.5Zm3.8-4.4 2.6 1.5c.87.5.87 1.75 0 2.25l-2.6 1.5L15.7 12l2.8-3.1Z"/></svg>Google Play</a>
+      <a href="https://apps.apple.com/app/id6787864798"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.3 12.8c0-2.2 1.8-3.3 1.9-3.35-1.04-1.52-2.65-1.73-3.22-1.75-1.37-.14-2.68.8-3.37.8-.7 0-1.77-.78-2.9-.76-1.5.02-2.88.87-3.65 2.2-1.55 2.7-.4 6.7 1.12 8.9.74 1.07 1.63 2.27 2.79 2.23 1.12-.05 1.54-.72 2.9-.72 1.35 0 1.73.72 2.9.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.34-.9-2.36-3.57ZM14.1 5.9c.61-.75 1.03-1.78.92-2.82-.88.04-1.96.59-2.6 1.33-.57.66-1.07 1.72-.94 2.73.99.08 2-.5 2.62-1.24Z"/></svg>App Store</a>
+    </div>
+  </div>
+</div>
+<div class="app">
+  <img src="https://play-lh.googleusercontent.com/xQcZPvAM_T_81kcoZym2W0-cpXOjmM8W-up4NalYjVFM7Hh7KAcF6zMhYypQ-RQ56paggS5BcDsgMmz0b5GrDgw=s128" alt="티킵 아이콘" loading="lazy" width="52" height="52">
+  <div>
+    <h3>티킵 — 관람 기록</h3>
+    <p>영화·공연·전시를 본 날의 기록을 티켓처럼 모읍니다. 좌석과 함께 본 사람, 그날의 감상을 남기고 모아서 다시 봅니다.</p>
+    <div class="links">
+      <a href="https://play.google.com/store/apps/details?id=com.junish.tikeep"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 1.8a1.3 1.3 0 0 0-.5 1.05v18.3c0 .43.19.82.5 1.05L13.4 12 3.6 1.8Zm11.1 8.9L5.5 1.2l11.6 6.6-2.4 2.9Zm0 2.6 2.4 2.9-11.6 6.6 9.2-9.5Zm3.8-4.4 2.6 1.5c.87.5.87 1.75 0 2.25l-2.6 1.5L15.7 12l2.8-3.1Z"/></svg>Google Play</a>
+      <a href="https://apps.apple.com/app/id6797006448"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.3 12.8c0-2.2 1.8-3.3 1.9-3.35-1.04-1.52-2.65-1.73-3.22-1.75-1.37-.14-2.68.8-3.37.8-.7 0-1.77-.78-2.9-.76-1.5.02-2.88.87-3.65 2.2-1.55 2.7-.4 6.7 1.12 8.9.74 1.07 1.63 2.27 2.79 2.23 1.12-.05 1.54-.72 2.9-.72 1.35 0 1.73.72 2.9.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.34-.9-2.36-3.57ZM14.1 5.9c.61-.75 1.03-1.78.92-2.82-.88.04-1.96.59-2.6 1.33-.57.66-1.07 1.72-.94 2.73.99.08 2-.5 2.62-1.24Z"/></svg>App Store</a>
+    </div>
+  </div>
+</div>
+<div class="app">
+  <img src="ddak-icon.png" alt="딱정산 아이콘" loading="lazy" width="52" height="52">
+  <div>
+    <h3>딱정산 — 모임 정산</h3>
+    <p>쓴 돈만 적으면 누가 누구에게 얼마를 보내면 되는지 계산합니다. 송금 횟수를 최소로 줄이고, 100원·1,000원 단위로 맞춰 보내기 쉬운 금액으로 만듭니다. 결과는 앱 없이 열리는 링크로 공유할 수 있습니다.</p>
+    <div class="links">
+      <a href="https://play.google.com/store/apps/details?id=com.junish.ddak"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 1.8a1.3 1.3 0 0 0-.5 1.05v18.3c0 .43.19.82.5 1.05L13.4 12 3.6 1.8Zm11.1 8.9L5.5 1.2l11.6 6.6-2.4 2.9Zm0 2.6 2.4 2.9-11.6 6.6 9.2-9.5Zm3.8-4.4 2.6 1.5c.87.5.87 1.75 0 2.25l-2.6 1.5L15.7 12l2.8-3.1Z"/></svg>Google Play</a>
+    </div>
+  </div>
+</div>
+<div class="app">
+  <img src="https://play-lh.googleusercontent.com/jTWsaFsPpr3XEs2UQLAfTkCjEbxePSoHJ5UpbgXEaTcBegIfNeA5y51Jd0S03MtZnHgYJqZ8RmCRTvHYS0jcdCk=s128" alt="데이노트 아이콘" loading="lazy" width="52" height="52">
+  <div>
+    <h3>데이노트 — 하루 한 편의 일기</h3>
+    <p>오늘 있었던 일을 낱장으로 적습니다. 사진과 스티커로 꾸미고, 지난 오늘에 무엇을 적었는지 다시 꺼내 봅니다.</p>
+    <div class="links">
+      <a href="https://play.google.com/store/apps/details?id=com.junish.daynote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 1.8a1.3 1.3 0 0 0-.5 1.05v18.3c0 .43.19.82.5 1.05L13.4 12 3.6 1.8Zm11.1 8.9L5.5 1.2l11.6 6.6-2.4 2.9Zm0 2.6 2.4 2.9-11.6 6.6 9.2-9.5Zm3.8-4.4 2.6 1.5c.87.5.87 1.75 0 2.25l-2.6 1.5L15.7 12l2.8-3.1Z"/></svg>Google Play</a>
+      <a href="https://apps.apple.com/app/id6797051199"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.3 12.8c0-2.2 1.8-3.3 1.9-3.35-1.04-1.52-2.65-1.73-3.22-1.75-1.37-.14-2.68.8-3.37.8-.7 0-1.77-.78-2.9-.76-1.5.02-2.88.87-3.65 2.2-1.55 2.7-.4 6.7 1.12 8.9.74 1.07 1.63 2.27 2.79 2.23 1.12-.05 1.54-.72 2.9-.72 1.35 0 1.73.72 2.9.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.34-.9-2.36-3.57ZM14.1 5.9c.61-.75 1.03-1.78.92-2.82-.88.04-1.96.59-2.6 1.33-.57.66-1.07 1.72-.94 2.73.99.08 2-.5 2.62-1.24Z"/></svg>App Store</a>
+    </div>
+  </div>
+</div>
+<div class="app">
+  <img src="https://play-lh.googleusercontent.com/rTtFeUUfz6dhEipt2LHysBRE4evce6E_oamgqQQTGCYalIhRJP3Igr8TW8Zhfp9G8PwkMxoRkzBt3gmw2R25uQ=s128" alt="틸데이 아이콘" loading="lazy" width="52" height="52">
+  <div>
+    <h3>틸데이 — 디데이·기념일</h3>
+    <p>기다리는 날과 기억할 날을 세어 줍니다. 홈 화면 위젯으로 남은 날을 보고, 당일에는 알림으로 알려 줍니다.</p>
+    <div class="links">
+      <a href="https://play.google.com/store/apps/details?id=com.junish.tillday"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 1.8a1.3 1.3 0 0 0-.5 1.05v18.3c0 .43.19.82.5 1.05L13.4 12 3.6 1.8Zm11.1 8.9L5.5 1.2l11.6 6.6-2.4 2.9Zm0 2.6 2.4 2.9-11.6 6.6 9.2-9.5Zm3.8-4.4 2.6 1.5c.87.5.87 1.75 0 2.25l-2.6 1.5L15.7 12l2.8-3.1Z"/></svg>Google Play</a>
+      <a href="https://apps.apple.com/app/id6797052453"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.3 12.8c0-2.2 1.8-3.3 1.9-3.35-1.04-1.52-2.65-1.73-3.22-1.75-1.37-.14-2.68.8-3.37.8-.7 0-1.77-.78-2.9-.76-1.5.02-2.88.87-3.65 2.2-1.55 2.7-.4 6.7 1.12 8.9.74 1.07 1.63 2.27 2.79 2.23 1.12-.05 1.54-.72 2.9-.72 1.35 0 1.73.72 2.9.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.34-.9-2.36-3.57ZM14.1 5.9c.61-.75 1.03-1.78.92-2.82-.88.04-1.96.59-2.6 1.33-.57.66-1.07 1.72-.94 2.73.99.08 2-.5 2.62-1.24Z"/></svg>App Store</a>
+    </div>
+  </div>
+</div>
+<div class="app">
+  <img src="https://play-lh.googleusercontent.com/94WFCDlOeIQODrtCAls4rl3HGyntMDz1bg_mx06Li3XpUCY49rnUi_9LYlikcxrGVpryXqZZsjl0Df-U_PLFceM=s128" alt="데일리북 Pro 아이콘" loading="lazy" width="52" height="52">
+  <div>
+    <h3>데일리북 Pro — 오프라인 독서 기록</h3>
+    <p>로그인 없이 이 폰에만 남기는 독서 기록입니다. 계정을 만들고 싶지 않은 분을 위해 남겨 둔 앱으로, 기록은 기기 안에만 저장됩니다.</p>
+    <div class="links">
+      <a href="https://play.google.com/store/apps/details?id=com.company.wadong0205.dailybookpro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 1.8a1.3 1.3 0 0 0-.5 1.05v18.3c0 .43.19.82.5 1.05L13.4 12 3.6 1.8Zm11.1 8.9L5.5 1.2l11.6 6.6-2.4 2.9Zm0 2.6 2.4 2.9-11.6 6.6 9.2-9.5Zm3.8-4.4 2.6 1.5c.87.5.87 1.75 0 2.25l-2.6 1.5L15.7 12l2.8-3.1Z"/></svg>Google Play</a>
+    </div>
+  </div>
+</div>
+
+<h2>이런 기준으로 만듭니다</h2>
+<p>기록을 남기는 앱은 오래 쓰게 됩니다. 그래서 몇 가지를 지키려고 합니다.</p>
+<ul>
+  <li><strong>쉬운 말로.</strong> 어려운 용어 대신 평소 쓰는 말로 적습니다.</li>
+  <li><strong>내 기록은 내 것.</strong> 언제든 내보내거나 지울 수 있게 합니다.</li>
+  <li><strong>필요한 권한만.</strong> 쓰지 않는 권한은 요구하지 않습니다.</li>
+  <li><strong>광고는 방해가 되지 않는 자리에.</strong> 기록을 적는 도중에는 끼어들지 않습니다.</li>
+</ul>
+
+<h2>자주 묻는 것</h2>
+<dl class="faq">
+  <dt>기기를 바꾸면 기록이 사라지나요?</dt>
+  <dd>로그인해서 쓰는 앱(갈피·티킵·데이노트·틸데이·딱정산)은 같은 계정으로 로그인하면 그대로 따라옵니다. 데일리북 Pro는 기기 안에만 저장되어 백업 파일로 옮겨야 합니다.</dd>
+
+  <dt>계정을 지우면 기록도 지워지나요?</dt>
+  <dd>앱에서 탈퇴하면 그 앱의 기록이 서버에서 지워집니다. 결제 내역처럼 법으로 보관해야 하는 것만 남습니다.</dd>
+
+  <dt>딱정산 공유 링크는 아무나 볼 수 있나요?</dt>
+  <dd>주소를 아는 사람만 볼 수 있고, 기본 30일이 지나면 만료됩니다. 계좌번호는 만든 사람이 켰을 때만 담깁니다.</dd>
+
+  <dt>문의는 어디로 하나요?</dt>
+  <dd>아래 메일로 보내 주시면 됩니다. 앱 안에서도 문의할 수 있습니다.</dd>
+</dl>
+
+<footer>
+  <p>문의 <a href="mailto:junish.contact@gmail.com">junish.contact@gmail.com</a></p>
+  <p>
+    <a href="https://calm-party-41e.notion.site/Junish-galpi-vinyl-encored-3904ddb493628112a80dd1b3d4752f89">개인정보처리방침</a> ·
+    <a href="https://calm-party-41e.notion.site/Junish-galpi-vinyl-encored-3904ddb493628163b575c5b713301841">이용약관</a>
+  </p>
+  <p>© 2026 Junish</p>
+</footer>
+
+</div>
+</body>
+</html>
