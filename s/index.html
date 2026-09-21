@@ -150,10 +150,8 @@
   .promo .d{margin-top:2px;font-size:12.5px;color:var(--muted);line-height:1.5}
   .stores{display:flex;gap:8px}
   .store{flex:1;height:42px;border-radius:21px;border:0;background:var(--lime);color:var(--ink);display:flex;
-         align-items:center;justify-content:center;gap:7px;font:700 13px var(--sans);cursor:pointer}
+         align-items:center;justify-content:center;gap:7px;font:700 13px var(--sans);text-decoration:none;cursor:pointer}
   .store.alt{background:#2A2E35;color:#fff}
-  .promo .soon{margin-top:-4px;font-size:12px;color:var(--muted);text-align:center}
-  .promo .soon:empty{display:none}
   .apps{margin-top:10px;background:#fff;border-radius:22px;padding:6px 16px}
   .apps>.t{padding:10px 0 6px;font-size:12.5px;font-weight:700;color:var(--sub)}
   .app{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--hair)}
@@ -222,6 +220,11 @@
 </div></div>
 <script>
 const FN = 'https://fvdihfmpjmgoffxosrmj.supabase.co/functions/v1/ddak-share/';
+
+/// 딱정산 스토어 주소. 아래 앱 목록과 달리 이건 이 페이지 자신의 앱이라 표에서 읽지 않는다.
+/// Play는 심사 통과 전이라 페이지가 안 열릴 수 있다(주소 자체는 확정).
+const DDAK_PLAY = 'https://play.google.com/store/apps/details?id=com.junish.ddak';
+const DDAK_APPSTORE = 'https://apps.apple.com/app/id6813096267';
 
 /// 애드센스 게시자 ID(ca-pub-…). 비어 있으면 광고 자리는 Junish 앱 하우스 광고가 채운다.
 /// 계정 승인 뒤 이 값과 SLOT만 채우면 바로 켜진다.
@@ -628,7 +631,9 @@ function render(data) {
 /// Junish 앱 목록. 스토어 주소는 서버(junish_apps)가 준다 —
 /// 이 페이지를 다시 배포하지 않아도 최신이다.
 function apps(rows) {
-  if (!Array.isArray(rows) || !rows.length) return null;
+  if (!Array.isArray(rows)) return null;
+  rows = rows.filter(a => a.id !== 'ddak');
+  if (!rows.length) return null;
   const box = el('div', 'apps');
   box.appendChild(el('div', 't', '이런 앱도 만들고 있습니다'));
   rows.forEach(a => {
@@ -682,7 +687,6 @@ function apps(rows) {
   return box;
 }
 
-/// 앱 설치 배너. 아직 스토어 주소가 없어서 누르면 안내만 띄운다.
 /// 광고 자리. 딱정산을 뺀 Junish 앱 중 하나를 골라(열 때마다 다르게) 스토어로 보낸다.
 function houseAd(rows) {
   if (!Array.isArray(rows)) return null;
@@ -727,20 +731,17 @@ function promo() {
   box.appendChild(head);
 
   const row = el('div', 'stores');
-  const note = el('div', 'soon');
-  [['Google Play', '', 'i-play'], ['App Store', 'alt', 'i-apple']].forEach(([name, cls, ic]) => {
-    const btn = el('button', 'store' + (cls ? ' ' + cls : ''));
-    btn.type = 'button';
-    btn.innerHTML = icon(ic, 14);
-    btn.appendChild(el('span', null, name));
-    btn.onclick = () => {
-      note.textContent = '출시 준비 중입니다';
-      setTimeout(() => (note.textContent = ''), 1800);
-    };
-    row.appendChild(btn);
-  });
+  [['Google Play', '', 'i-play', DDAK_PLAY], ['App Store', 'alt', 'i-apple', DDAK_APPSTORE]]
+    .forEach(([name, cls, ic, href]) => {
+      const link = el('a', 'store' + (cls ? ' ' + cls : ''));
+      link.href = href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.innerHTML = icon(ic, 14);
+      link.appendChild(el('span', null, name));
+      row.appendChild(link);
+    });
   box.appendChild(row);
-  box.appendChild(note);
   return box;
 }
 
