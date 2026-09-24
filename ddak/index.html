@@ -6,9 +6,12 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="icon.png">
 <script>
+// 유입 출처: ?src=threads처럼 넘기면 그 이름, 없으면 link. Play는 utm, App Store는 ct(캠페인)로 콘솔에 잡힌다.
+var S=(new URLSearchParams(location.search).get('src')||'').replace(/[^\w-]/g,'').slice(0,30)||'link';
+function T(u){return /apple\.com/.test(u)?u+'?pt=129127072&ct='+S+'&mt=8':u+'&referrer=utm_source%3D'+S+'%26utm_campaign%3D'+S}
 // ponytail: UA 분기만. 아이패드(iPadOS 13+)는 Mac으로 보이므로 터치 여부로 구분.
 (function(){var u=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1),aos=/Android/.test(u),A=null;
-if(ios)location.replace('https://apps.apple.com/app/id6813096267');else if(aos&&A)location.replace(A);})();
+if(ios)location.replace(T('https://apps.apple.com/app/id6813096267'));else if(aos&&A)location.replace(T(A));})();
 </script>
 <style>:root{color-scheme:light dark;--bg:#F7F6F4;--ink:#16150F;--sub:#5B5A54;--line:#E4E2DC}
 @media (prefers-color-scheme:dark){:root{--bg:#16150F;--ink:#F7F6F4;--sub:#A8A69E;--line:#2C2B25}}
@@ -18,4 +21,5 @@ img{width:96px;height:96px;border-radius:22px}h1{font-size:1.6rem;margin:.8rem 0
 .f{margin-top:1.6rem;font-size:.85rem}.f a{color:var(--sub)}</style></head><body><main>
 <img src="icon.png" alt="딱정산 아이콘"><h1>딱정산</h1><p class="s">모임 정산 앱 · 쓴 돈만 적으면 누가 누구에게 얼마</p>
 <a class="b" href="https://apps.apple.com/app/id6813096267">App Store</a><p class="s">안드로이드 버전은 곧 나와요.</p>
-<p class="f"><a href="/">Junish 앱 모두 보기</a></p></main></body></html>
+<p class="f"><a href="/">Junish 앱 모두 보기</a></p></main>
+<script>document.querySelectorAll('a.b').forEach(function(a){a.href=T(a.href)})</script></body></html>
