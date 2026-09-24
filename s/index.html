@@ -223,8 +223,8 @@ const FN = 'https://fvdihfmpjmgoffxosrmj.supabase.co/functions/v1/ddak-share/';
 
 /// 딱정산 스토어 주소. 아래 앱 목록과 달리 이건 이 페이지 자신의 앱이라 표에서 읽지 않는다.
 /// Play는 심사 통과 전이라 페이지가 안 열릴 수 있다(주소 자체는 확정).
-const DDAK_PLAY = 'https://play.google.com/store/apps/details?id=com.junish.ddak';
-const DDAK_APPSTORE = 'https://apps.apple.com/app/id6813096267';
+const DDAK_PLAY = 'https://play.google.com/store/apps/details?id=com.junish.ddak&referrer=utm_source%3Dddak_share%26utm_campaign%3Dddak_share';
+const DDAK_APPSTORE = 'https://apps.apple.com/app/id6813096267?pt=129127072&ct=ddak_share&mt=8';
 
 /// 애드센스 게시자 ID(ca-pub-…). 비어 있으면 광고 자리는 Junish 앱 하우스 광고가 채운다.
 /// 계정 승인 뒤 이 값과 SLOT만 채우면 바로 켜진다.
@@ -673,7 +673,7 @@ function apps(rows) {
         return;
       }
       const link = el('a', cls);
-      link.href = href;
+      link.href = fromShare(href);
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.title = label;
@@ -687,6 +687,9 @@ function apps(rows) {
   return box;
 }
 
+/// 스토어 유입 출처: 표 링크의 `crosspromo` 태그를 이 페이지 몫(`ddak_share`)으로 바꾼다.
+const fromShare = href => href.replaceAll('crosspromo', 'ddak_share');
+
 /// 광고 자리. 딱정산을 뺀 Junish 앱 중 하나를 골라(열 때마다 다르게) 스토어로 보낸다.
 function houseAd(rows) {
   if (!Array.isArray(rows)) return null;
@@ -697,7 +700,7 @@ function houseAd(rows) {
   const href = ios ? (a.ios_url || a.android_url) : (a.android_url || a.ios_url);
   if (!/^https:\/\//.test(href)) return null;
   const box = el('a', 'ad');
-  box.href = href;
+  box.href = fromShare(href);
   box.target = '_blank';
   box.rel = 'noopener';
   const initial = () => el('div', 'no', (a.name_ko || '?')[0]);
