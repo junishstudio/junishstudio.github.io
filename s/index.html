@@ -274,7 +274,7 @@ const BARS = ['#14161A', '#D9F26A', '#C9CDD1', '#9AA1A8', '#E9E8E2'];
 
 const won = n => (n || 0).toLocaleString('ko-KR') + '원';
 const num = n => (n || 0).toLocaleString('ko-KR');
-const minus = n => (n ? '−' : '') + num(n);
+const minus = n => (n ? '−' : '') + won(n);
 // 부호를 항상 붙인다. +1,000 / −1,000
 let toastTimer = 0;
 function toast(text) {
@@ -289,7 +289,7 @@ function toast(text) {
   toastTimer = setTimeout(() => box.classList.remove('on'), 2200);
 }
 
-const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + num(Math.abs(n));
+const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + won(Math.abs(n));
 
 function icon(id, size, cls) {
   return `<svg class="ico ${cls || ''}" width="${size}" height="${size}" viewBox="0 0 ${id === 'm-a' ? 100 : 24} ${id === 'm-a' ? 100 : 24}" aria-hidden="true"><use href="#${id}"></use></svg>`;
@@ -393,7 +393,7 @@ function transferCard(t, perTransferAccount) {
   top.appendChild(pill(t.fromName));
   top.insertAdjacentHTML('beforeend', icon('i-arrow', 14, 'arrow'));
   top.appendChild(pill(t.toName));
-  top.appendChild(el('span', 'amt num', num(t.amount)));
+  top.appendChild(el('span', 'amt num', won(t.amount)));
   box.appendChild(top);
   if (perTransferAccount && t.account) {
     const acc = el('div', 'acc');
@@ -534,12 +534,12 @@ function render(data) {
       const sum = groups[k].reduce((t, e) => t + (e.amount || 0), 0);
       const head = el('div', 'date');
       head.appendChild(el('span', null, k || '날짜 없음'));
-      head.appendChild(el('span', 'num', num(sum)));
+      head.appendChild(el('span', 'num', won(sum)));
       paper.appendChild(head);
       groups[k].forEach(e => paper.appendChild(
         line(e.title || '이름 없는 항목',
              `${e.payerName} 결제 · ${e.count}명${e.foreign ? ' · ' + e.foreign : ''}`,
-             num(e.amount), null, e.categoryId)));
+             won(e.amount), null, e.categoryId)));
     });
 
   // 타입(카테고리)별 — 어디에 얼마를 썼나, 비율까지.
@@ -554,7 +554,7 @@ function render(data) {
       if (ic) lab.appendChild(ic);
       lab.append(c.label);
       top.appendChild(lab);
-      top.appendChild(el('span', 'num', `${Math.round((c.ratio || 0) * 100)}% · ${num(c.amount)}`));
+      top.appendChild(el('span', 'num', `${Math.round((c.ratio || 0) * 100)}% · ${won(c.amount)}`));
       box.appendChild(top);
       const bar = el('div', 'bar');
       const fill = el('i');
@@ -573,9 +573,9 @@ function render(data) {
     paper.appendChild(el('hr'));
     paper.appendChild(el('h2', 'people', '개인별 낸 돈'));
     payers.forEach(b => paper.appendChild(
-      personBox(b.name, '낸 돈 ' + num(b.paid), '', body => {
+      personBox(b.name, '낸 돈 ' + won(b.paid), '', body => {
         b.paidItems.forEach(i =>
-          body.appendChild(line(i.title || '이름 없는 항목', '', num(i.amount), 'in', i.categoryId)));
+          body.appendChild(line(i.title || '이름 없는 항목', '', won(i.amount), 'in', i.categoryId)));
       })));
   }
 
@@ -584,17 +584,17 @@ function render(data) {
   paper.appendChild(el('h2', 'people', '개인별 내는 돈'));
   (s.balances || []).forEach(b => {
     const net = b.net || 0;
-    const label = net > 0 ? '받을 ' + num(net) : net < 0 ? '보낼 ' + num(-net) : '정산 완료';
+    const label = net > 0 ? '받을 돈 ' + won(net) : net < 0 ? '보낼 돈 ' + won(-net) : '정산 완료';
     const box = personBox(b.name, label, net > 0 ? 'pos' : net < 0 ? 'neg' : 'zero', body => {
       (b.items || []).filter(i => i.amount !== 0).forEach(i =>
-        body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', num(i.amount), 'in', i.categoryId)));
+        body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', won(i.amount), 'in', i.categoryId)));
       // 항목 → 조정 → 단위 → 합계(부담액) 순. 더하고 빼는 과정을 먼저 보여 준다.
       if (b.adjust) body.appendChild(
         line('개인 조정', b.adjust > 0 ? '더 냄' : '덜 냄', signed(b.adjust), 'in sub'));
       if (b.rounding) body.appendChild(
         line(s.rounding || '단위 맞추기', b.rounding > 0 ? '더 냄' : '덜 냄', signed(b.rounding), 'in sub'));
       // 이 사람이 실제로 져야 할 몫. 위 항목·조정·단위를 모두 더한 값이다.
-      if (b.owed !== undefined) body.appendChild(line('부담액', '', num(b.owed), 'in sum'));
+      if (b.owed !== undefined) body.appendChild(line('부담액', '', won(b.owed), 'in sum'));
       if (b.paid) body.appendChild(line('낸 돈', '', minus(b.paid), 'in sub'));
       if (b.prepaid) body.appendChild(line('미리 낸 회비', '', minus(b.prepaid), 'in sub'));
     });
