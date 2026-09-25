@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.junish.jettae",
+      "sha256_cert_fingerprints": [
+        "0E:46:00:D0:E6:5B:80:DD:2D:DF:4C:87:E2:10:13:80:40:CF:0C:D4:C5:F0:A8:6A:A8:F8:26:23:79:1B:EB:C5",
+        "8C:99:0A:25:46:77:3E:FA:EA:4D:FA:F4:81:D8:F3:07:A7:33:FF:88:17:D2:CA:6F:F4:74:58:36:1B:AE:20:CC"
+      ]
+    }
+  }
+]

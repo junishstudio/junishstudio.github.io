@@ -34,6 +34,9 @@
         font:700 15px var(--sans);cursor:pointer}
   .copy.done{background:var(--mint)}
   ol{margin:0;padding-left:20px;font-size:14.5px;line-height:1.75;color:var(--ink)}
+  .open{display:flex;align-items:center;justify-content:center;height:54px;border-radius:18px;text-decoration:none;
+        font-weight:700;font-size:16px;background:var(--mint);color:#fff}
+  .hint{margin:8px 0 0;text-align:center;font-size:13px;color:var(--muted)}
   .stores{display:flex;flex-direction:column;gap:10px}
   .store{display:flex;align-items:center;justify-content:center;height:50px;border-radius:16px;text-decoration:none;
          font-weight:700;font-size:15px;background:#fff;color:var(--ink);border:1px solid rgba(27,42,58,.08)}
@@ -51,6 +54,10 @@
     <button class="copy" id="copy" type="button"></button>
   </section>
   <section class="card"><ol id="steps"></ol></section>
+  <div id="openwrap" style="display:none">
+    <a class="open" id="open" href="#"></a>
+    <p class="hint" id="hint"></p>
+  </div>
   <div class="stores">
     <a class="store" id="play" href="https://play.google.com/store/apps/details?id=com.junish.jettae&amp;referrer=utm_source%3Dinvite%26utm_campaign%3Dinvite">Google Play</a>
     <a class="store" id="ios" href="https://apps.apple.com/app/id6815519683?pt=129127072&amp;ct=invite&amp;mt=8">App Store</a>
@@ -63,13 +70,13 @@
   var code = /^[A-Z0-9]{4,12}$/.test(raw) ? raw : '';
   var T = {
     ko:{app:'제때',title:'<strong>같이 쓰는 공간</strong>에<br>초대받았어요',label:'초대 코드',copy:'코드 복사',copied:'복사했어요',
-        steps:['제때 앱을 설치하고 로그인해요','공간 탭 → ‘초대 코드로 들어가기’','이 코드를 넣으면 같이 챙길 수 있어요'],none:'초대 코드가 없어요. 받은 링크를 다시 열어 주세요.'},
+        steps:['제때 앱을 설치하고 로그인해요','공간 탭 → ‘초대 코드로 들어가기’','이 코드를 넣으면 같이 챙길 수 있어요'],none:'초대 코드가 없어요. 받은 링크를 다시 열어 주세요.',open:'앱에서 열기',hint:'앱이 없으면 아래에서 설치해 주세요'},
     en:{app:'Jettae',title:'You\'re invited to a<br><strong>shared space</strong>',label:'Invite code',copy:'Copy code',copied:'Copied',
-        steps:['Install Jettae and sign in','Spaces tab → “Join with invite code”','Enter this code to keep track together'],none:'No invite code. Please open the link you received again.'},
+        steps:['Install Jettae and sign in','Spaces tab → “Join with invite code”','Enter this code to keep track together'],none:'No invite code. Please open the link you received again.',open:'Open in the app',hint:'Don\'t have the app? Install it below.'},
     ja:{app:'Jettae',title:'<strong>共有スペース</strong>に<br>招待されました',label:'招待コード',copy:'コードをコピー',copied:'コピーしました',
-        steps:['Jettaeをインストールしてログイン','スペースタブ →「招待コードで参加」','このコードを入力すると一緒に管理できます'],none:'招待コードがありません。受け取ったリンクをもう一度開いてください。'},
+        steps:['Jettaeをインストールしてログイン','スペースタブ →「招待コードで参加」','このコードを入力すると一緒に管理できます'],none:'招待コードがありません。受け取ったリンクをもう一度開いてください。',open:'アプリで開く',hint:'アプリがない場合は、下からインストールしてください'},
     es:{app:'Jettae',title:'Te invitaron a un<br><strong>espacio compartido</strong>',label:'Código de invitación',copy:'Copiar código',copied:'Copiado',
-        steps:['Instala Jettae e inicia sesión','Pestaña Espacios → «Unirme con código»','Ingresa este código para organizarse juntos'],none:'No hay código de invitación. Vuelve a abrir el enlace que recibiste.'}
+        steps:['Instala Jettae e inicia sesión','Pestaña Espacios → «Unirme con código»','Ingresa este código para organizarse juntos'],none:'No hay código de invitación. Vuelve a abrir el enlace que recibiste.',open:'Abrir en la app',hint:'Si no tienes la app, instálala abajo.'}
   };
   var lang = (navigator.language || 'ko').slice(0,2);
   var t = T[lang] || T.en;
@@ -82,6 +89,12 @@
   var btn = document.getElementById('copy');
   if (code) {
     document.getElementById('code').textContent = code;
+    // 앱이 설치돼 있으면 바로 초대 확인 화면으로(없으면 아무 일도 없어서 아래 스토어 안내).
+    var open = document.getElementById('open');
+    open.href = 'com.junish.jettae://join?c=' + code;
+    open.textContent = t.open;
+    document.getElementById('hint').textContent = t.hint;
+    document.getElementById('openwrap').style.display = '';
     btn.textContent = t.copy;
     btn.onclick = function(){
       var done = function(){ btn.textContent = t.copied; btn.classList.add('done'); };

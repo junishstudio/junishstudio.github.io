@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["6YNF48Z3D4.com.junish.jettae"],
+        "components": [
+          { "/": "/j" },
+          { "/": "/j/*" }
+        ]
+      }
+    ]
+  }
+}
