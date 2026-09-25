@@ -118,6 +118,7 @@
   details.person>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;
         align-items:center;padding:11px 0;gap:10px}
   details.person>summary::-webkit-details-marker{display:none}
+  details.person>summary .psub{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   details.person>summary .amt{margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700;white-space:nowrap}
   details.person>summary .caret{color:var(--muted);transition:transform .15s}
   details.person[open]>summary .caret{transform:rotate(180deg)}
@@ -373,11 +374,13 @@ function pill(name) {
 }
 
 /// 한 사람의 상세. 이름·금액만 보이고 항목은 눌러야 펴진다.
-function personBox(name, amountLabel, tone, fill) {
+function personBox(name, amountLabel, tone, fill, sub) {
   const box = el('details', 'person');
   box.dataset.name = name;
   const summary = el('summary');
   summary.appendChild(pill(name));
+  // 펴기 전에도 부담액이 보이게(2026-09-26 요청).
+  if (sub) summary.appendChild(el('span', 'psub num', sub));
   summary.appendChild(el('span', 'amt num ' + tone, amountLabel));
   summary.insertAdjacentHTML('beforeend', icon('i-down', 14, 'caret'));
   box.appendChild(summary);
@@ -597,7 +600,7 @@ function render(data) {
       if (b.owed !== undefined) body.appendChild(line('부담액', '', won(b.owed), 'in sum'));
       if (b.paid) body.appendChild(line('낸 돈', '', minus(b.paid), 'in sub'));
       if (b.prepaid) body.appendChild(line('미리 낸 회비', '', minus(b.prepaid), 'in sub'));
-    });
+    }, b.owed !== undefined ? '부담 ' + won(b.owed) : null);
     people.push(box);
     paper.appendChild(box);
   });
