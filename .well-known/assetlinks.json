@@ -1,6 +1,8 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.junish.jettae",
@@ -11,11 +13,14 @@
     }
   },
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.junish.ddak",
       "sha256_cert_fingerprints": [
+        "FD:6B:60:18:53:99:47:52:93:49:B5:0E:79:4B:8D:B2:AA:85:D6:15:6E:9D:78:E4:42:81:54:00:94:51:AA:8F",
         "8C:99:0A:25:46:77:3E:FA:EA:4D:FA:F4:81:D8:F3:07:A7:33:FF:88:17:D2:CA:6F:F4:74:58:36:1B:AE:20:CC"
       ]
     }
