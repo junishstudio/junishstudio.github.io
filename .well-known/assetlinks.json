@@ -9,5 +9,15 @@
         "8C:99:0A:25:46:77:3E:FA:EA:4D:FA:F4:81:D8:F3:07:A7:33:FF:88:17:D2:CA:6F:F4:74:58:36:1B:AE:20:CC"
       ]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.junish.ddak",
+      "sha256_cert_fingerprints": [
+        "8C:99:0A:25:46:77:3E:FA:EA:4D:FA:F4:81:D8:F3:07:A7:33:FF:88:17:D2:CA:6F:F4:74:58:36:1B:AE:20:CC"
+      ]
+    }
   }
 ]
