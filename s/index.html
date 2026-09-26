@@ -606,10 +606,10 @@ function render(data) {
       if (b.rounding) body.appendChild(
         line(s.rounding || '단위 맞추기', b.rounding > 0 ? '더 냄' : '덜 냄', signed(b.rounding), 'in sub'));
       // 이 사람이 실제로 져야 할 몫. 위 항목·조정·단위를 모두 더한 값이다.
-      if (b.owed !== undefined) body.appendChild(line('부담액', '', won(b.owed), 'in sum'));
+      if (b.owed !== undefined) body.appendChild(line('몫', '', won(b.owed), 'in sum'));
       if (b.paid) body.appendChild(line('낸 돈', '', minus(b.paid), 'in sub'));
       if (b.prepaid) body.appendChild(line('미리 낸 회비', '', minus(b.prepaid), 'in sub'));
-    }, b.owed !== undefined ? '부담 ' + won(b.owed) : null);
+    }, b.owed !== undefined ? '몫 ' + won(b.owed) : null);
     people.push(box);
     paper.appendChild(box);
   });
