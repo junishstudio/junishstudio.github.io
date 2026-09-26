@@ -42,6 +42,10 @@
   h1{margin:14px 0 0;text-align:center;font-family:var(--mono);font-size:24px;letter-spacing:.04em;
      font-weight:700;overflow-wrap:anywhere}
   .meta{margin-top:8px;text-align:center;font-family:var(--mono);font-size:12.5px;color:var(--sub)}
+  /* 정산한 뒤 항목이 더 들어왔다 — 다시 정산 중(2026-09-26). */
+  .recalc{margin:14px auto 0;padding:10px 12px;border-radius:10px;background:var(--lime);color:var(--ink);
+          font-size:13px;line-height:1.45;text-align:center}
+  .recalc b{display:block;font-size:14px;margin-bottom:2px}
   .total{margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;
          font-family:var(--mono);font-weight:700}
   .total .l{font-size:15px;letter-spacing:.2em}
@@ -440,6 +444,11 @@ function render(data) {
   const paper = el('div', 'paper');
   paper.appendChild(brandRow());
   paper.appendChild(el('h1', null, s.title || '정산'));
+  if (data.recalc) {
+    const r = el('div', 'recalc');
+    r.append(el('b', null, '다시 정산 중'), '정산한 뒤 항목이 더 들어왔어요. 금액이 바뀔 수 있어요.');
+    paper.appendChild(r);
+  }
   const expenses = s.expenses || [];
   paper.appendChild(el('div', 'meta',
     [s.date, s.groupName, members.length + '명', expenses.length + '건'].filter(Boolean).join(' · ')));
