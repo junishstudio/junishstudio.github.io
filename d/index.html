@@ -43,20 +43,20 @@
 <body>
 <main>
   <div class="brand"><img src="/ddak/icon.png" alt=""><b>딱정산</b></div>
-  <h1>모임에<br>초대받았어요</h1>
+  <h1 data-t="h1">모임에<br>초대받았어요</h1>
   <section class="card">
-    <div class="label">초대 코드</div>
+    <div class="label" data-t="label">초대 코드</div>
     <div class="code" id="code"></div>
-    <button class="copy" id="copy" type="button">코드 복사</button>
+    <button class="copy" id="copy" type="button" data-t="copy">코드 복사</button>
   </section>
   <section class="card"><ol>
-    <li>딱정산 앱을 설치하고 로그인해요</li>
-    <li>이 페이지로 돌아와 ‘앱에서 열기’를 눌러요</li>
-    <li>모임에서 내 이름을 고르면 정산을 같이 봐요</li>
+    <li data-t="s1">딱정산 앱을 설치하고 로그인해요</li>
+    <li data-t="s2">이 페이지로 돌아와 ‘앱에서 열기’를 눌러요</li>
+    <li data-t="s3">모임에서 내 이름을 고르면 정산을 같이 봐요</li>
   </ol></section>
   <div id="openwrap" style="display:none">
-    <a class="open" id="open" href="#">앱에서 열기</a>
-    <p class="hint">앱이 없으면 아래에서 설치해 주세요</p>
+    <a class="open" id="open" href="#" data-t="open">앱에서 열기</a>
+    <p class="hint" data-t="hint">앱이 없으면 아래에서 설치해 주세요</p>
   </div>
   <div class="stores">
     <a class="store" id="play" href="https://play.google.com/store/apps/details?id=com.junish.ddak&amp;referrer=utm_source%3Dinvite%26utm_campaign%3Dinvite">Google Play</a>
@@ -65,6 +65,30 @@
   <div class="foot">Junish · 딱정산</div>
 </main>
 <script>
+  // 브라우저 언어가 일본어·영어면 글자만 바꾼다(2026-10-03 다국어). 한국어는 위 HTML 그대로.
+  var lang = (navigator.language || 'ko').toLowerCase();
+  lang = lang.indexOf('ko') === 0 ? 'ko' : lang.indexOf('ja') === 0 ? 'ja' : 'en';
+  var T = {
+    en: { h1: 'You’re invited<br>to a group', label: 'Invite code', copy: 'Copy code', copied: 'Copied',
+          s1: 'Install the 딱정산 app and sign in', s2: 'Come back to this page and tap ‘Open in app’',
+          s3: 'Pick your name in the group to see the settlement together', open: 'Open in app',
+          hint: 'No app yet? Install it below', none: 'No invite code. Please open the link you received again.',
+          title: 'Invite · 딱정산' },
+    ja: { h1: 'グループに<br>招待されました', label: '招待コード', copy: 'コードをコピー', copied: 'コピーしました',
+          s1: '딱정산アプリをインストールしてログイン', s2: 'このページに戻って「アプリで開く」をタップ',
+          s3: 'グループで自分の名前を選ぶと、精算を一緒に見られます', open: 'アプリで開く',
+          hint: 'アプリがない場合は下からインストールしてください', none: '招待コードがありません。受け取ったリンクをもう一度開いてください。',
+          title: '招待 · 딱정산' },
+  }[lang];
+  var t = function (k, ko) { return T ? T[k] : ko; };
+  if (T) {
+    document.documentElement.lang = lang;
+    document.title = T.title;
+    document.querySelectorAll('[data-t]').forEach(function (e) {
+      // h1만 줄바꿈 태그가 있다. 나머지는 글자만.
+      if (e.dataset.t === 'h1') e.innerHTML = T.h1; else e.textContent = T[e.dataset.t];
+    });
+  }
   // 초대 코드는 앱이 만든 8자리(대문자·숫자). 그 밖의 값은 보여 주지 않는다(페이지에 임의 글자를 찍지 않게).
   var raw = (new URLSearchParams(location.search).get('c') || '').trim().toUpperCase();
   var code = /^[A-Z0-9]{4,12}$/.test(raw) ? raw : '';
@@ -75,11 +99,12 @@
     document.getElementById('open').href = 'com.junish.ddak://join?c=' + code;
     document.getElementById('openwrap').style.display = '';
     btn.onclick = function(){
-      var done = function(){ btn.textContent = '복사했어요'; btn.classList.add('done'); };
+      var done = function(){ btn.textContent = t('copied', '복사했어요'); btn.classList.add('done'); };
       if (navigator.clipboard) navigator.clipboard.writeText(code).then(done, done); else done();
     };
   } else {
-    document.getElementById('code').innerHTML = '<span class="none">초대 코드가 없어요. 받은 링크를 다시 열어 주세요.</span>';
+    document.getElementById('code').innerHTML = '<span class="none"></span>';
+    document.querySelector('#code .none').textContent = t('none', '초대 코드가 없어요. 받은 링크를 다시 열어 주세요.');
     btn.style.display = 'none';
   }
   // 기기에 맞는 스토어만(아이패드는 Mac으로 보여 터치 여부로 가린다).

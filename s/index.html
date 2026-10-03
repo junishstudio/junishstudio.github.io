@@ -269,6 +269,18 @@ function adsenseBox() {
 }
 const app = document.getElementById('app');
 
+// 보는 사람 브라우저 언어(2026-10-03 다국어). 한국어·일본어가 아니면 영어.
+// 방식·단위 규칙·항목 이름 같은 스냅샷 글자는 만든 사람 언어 그대로다.
+const LANG = (() => {
+  const l = (navigator.language || 'ko').toLowerCase();
+  return l.startsWith('ko') ? 'ko' : l.startsWith('ja') ? 'ja' : 'en';
+})();
+const L3 = (ko, en, ja) => (LANG === 'ko' ? ko : LANG === 'ja' ? ja : en);
+document.documentElement.lang = LANG;
+document.querySelector('.loadtext').textContent = L3('영수증을 불러오는 중', 'Loading the receipt', 'レシートを読み込み中');
+// 정산 기준 화폐. 금액은 최소 단위 정수(달러·유로는 센트) — 앱 AppCurrency와 같은 표기.
+let CUR = 'KRW';
+
 // 사람 캡슐 색. 앱 PersonColors.pairs와 같은 순서 — 인원 순서대로 배정한다.
 const PERSON = [
   ['#DCEBE6', '#0F5C4C'], ['#FBE6DE', '#A8432A'], ['#DFEAF4', '#2C5F86'], ['#EFE3F3', '#6E3F84'],
@@ -277,8 +289,20 @@ const PERSON = [
 // 카테고리 막대. 앱 barPalette(잉크 → 라임 → 회색).
 const BARS = ['#14161A', '#D9F26A', '#C9CDD1', '#9AA1A8', '#E9E8E2'];
 
-const won = n => (n || 0).toLocaleString('ko-KR') + '원';
-const num = n => (n || 0).toLocaleString('ko-KR');
+const DEC = () => (CUR === 'USD' || CUR === 'EUR' ? 2 : 0);
+const num = n => ((n || 0) / 10 ** DEC())
+  .toLocaleString('en-US', { minimumFractionDigits: DEC(), maximumFractionDigits: DEC() });
+// 화폐 기호: [앞, 뒤]. 원 → 12,000원 / ₩12,000 / 12,000ウォン
+const unit = () => ({
+  KRW: [L3('', '₩', ''), L3('원', '', 'ウォン')],
+  JPY: [L3('', '¥', ''), L3('엔', '', '円')],
+  USD: ['$', ''],
+  EUR: ['€', ''],
+}[CUR] || ['', '']);
+const won = n => {
+  const [pre, post] = unit();
+  return (n < 0 ? '−' : '') + pre + num(Math.abs(n || 0)) + post;
+};
 const minus = n => (n ? '−' : '') + won(n);
 // 부호를 항상 붙인다. +1,000 / −1,000
 let toastTimer = 0;
@@ -294,6 +318,12 @@ function toast(text) {
   toastTimer = setTimeout(() => box.classList.remove('on'), 2200);
 }
 
+const NOITEM = L3('이름 없는 항목', 'Untitled item', '名前のない項目');
+const MORE = L3('더 냄', 'pays more', '多め');
+const LESS = L3('덜 냄', 'pays less', '少なめ');
+const appName = a => a['name_' + LANG] || a.name_ko || a.id;
+const appTag = a => a['tagline_' + LANG] || a.tagline_ko;
+const paidBy = who => L3(`${who} 결제`, `paid by ${who}`, `${who}が支払い`);
 const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + won(Math.abs(n));
 
 function icon(id, size, cls) {
@@ -408,13 +438,13 @@ function transferCard(t, perTransferAccount) {
     const btn = el('button', 'copy');
     btn.type = 'button';
     btn.innerHTML = icon('i-copy', 11);
-    const label = el('span', null, '복사');
+    const label = el('span', null, L3('복사', 'Copy', 'コピー'));
     btn.appendChild(label);
     btn.onclick = () => {
       navigator.clipboard.writeText(t.account);
-      label.textContent = '복사됨';
+      label.textContent = L3('복사됨', 'Copied', 'コピーしました');
       btn.classList.add('done');
-      setTimeout(() => { label.textContent = '복사'; btn.classList.remove('done'); }, 1200);
+      setTimeout(() => { label.textContent = L3('복사', 'Copy', 'コピー'); btn.classList.remove('done'); }, 1200);
     };
     acc.appendChild(btn);
     box.appendChild(acc);
@@ -432,7 +462,9 @@ function render(data) {
   STYLES = (s.categoryStyles && typeof s.categoryStyles === 'object') ? s.categoryStyles : {};
   // 새 앱은 계좌를 사람마다 한 번(accounts)만 싣는다. 예전 링크는 송금마다 붙어 온다.
   const accounts = Array.isArray(s.accounts) ? s.accounts : null;
-  document.title = (s.title || '정산') + ' · 딱정산';
+  CUR = s.currency || 'KRW';
+  const untitled = L3('정산', 'Settlement', '精算');
+  document.title = (s.title || untitled) + ' · 딱정산';
   colorOf = name => {
     const i = members.indexOf(name);
     if (i >= 0) return PERSON[i % PERSON.length];
@@ -443,30 +475,41 @@ function render(data) {
 
   const paper = el('div', 'paper');
   paper.appendChild(brandRow());
-  paper.appendChild(el('h1', null, s.title || '정산'));
+  paper.appendChild(el('h1', null, s.title || untitled));
   if (data.recalc) {
     const r = el('div', 'recalc');
-    r.append(el('b', null, '다시 정산 중'), '정산한 뒤 항목이 더 들어왔어요. 금액이 바뀔 수 있어요.');
+    r.append(el('b', null, L3('다시 정산 중', 'Re-settling', '再精算中')),
+      L3('정산한 뒤 항목이 더 들어왔어요. 금액이 바뀔 수 있어요.',
+         'Items were added after settling. Amounts may change.',
+         '精算後に項目が追加されました。金額が変わる場合があります。'));
     paper.appendChild(r);
   }
   const expenses = s.expenses || [];
   paper.appendChild(el('div', 'meta',
-    [s.date, s.groupName, members.length + '명', expenses.length + '건'].filter(Boolean).join(' · ')));
+    [s.date, s.groupName,
+     L3(`${members.length}명`, members.length === 1 ? '1 person' : `${members.length} people`, `${members.length}人`),
+     L3(`${expenses.length}건`, expenses.length === 1 ? '1 item' : `${expenses.length} items`, `${expenses.length}件`)].filter(Boolean).join(' · ')));
   // 어떻게 계산했는지 — 송금 방식과 단위 맞추기.
   const how = [s.strategy, s.rounding].filter(Boolean).join(' · ');
   if (how) paper.appendChild(el('div', 'meta', how));
 
   const total = el('div', 'total');
-  total.appendChild(el('span', 'l', '합계'));
-  const tr = el('span', 'r num', num(s.total));
-  tr.appendChild(el('small', null, '원'));
+  total.appendChild(el('span', 'l', L3('합계', 'Total', '合計')));
+  const tr = el('span', 'r num');
+  const [pre, post] = unit();
+  if (pre) tr.appendChild(el('small', null, pre));
+  tr.append(num(s.total));
+  if (post) tr.appendChild(el('small', null, post));
   total.appendChild(tr);
   paper.appendChild(total);
 
   const transfers = s.transfers || [];
   if (transfers.length) {
     const mc = el('div', 'mincount');
-    mc.append((s.strategy || '최소 송금') + ' · ', el('b', null, transfers.length + '건'), '이면 끝');
+    const n = transfers.length;
+    mc.append((s.strategy || L3('최소 송금', 'Fewest transfers', '最少の送金')) + ' · ',
+      el('b', null, L3(`${n}건`, n === 1 ? '1 transfer' : `${n} transfers`, `${n}件`)),
+      L3('이면 끝', ' and done', 'で完了'));
     paper.appendChild(mc);
   }
 
@@ -475,9 +518,9 @@ function render(data) {
   if (transfers.length) {
     paper.appendChild(el('hr'));
     const head = el('div', 'sechead');
-    head.appendChild(el('h2', null, '보낼 돈'));
+    head.appendChild(el('h2', null, L3('보낼 돈', 'Transfers', '送金')));
     const showChips = members.length > 1;
-    if (showChips) head.appendChild(el('span', 'hint', '내 이름 → 내 것만'));
+    if (showChips) head.appendChild(el('span', 'hint', L3('내 이름 → 내 것만', 'Tap your name → only yours', '自分の名前 → 自分の分だけ')));
     paper.appendChild(head);
 
     const list = el('div');
@@ -489,13 +532,13 @@ function render(data) {
       list.innerHTML = '';
       const mine = transfers.filter(t => !me || t.fromName === me || t.toName === me);
       mine.forEach(t => list.appendChild(transferCard(t, !accounts)));
-      if (!mine.length) list.appendChild(el('div', 'empty', `${me} 님은 주고받을 돈이 없습니다`));
+      if (!mine.length) list.appendChild(el('div', 'empty', L3(`${me} 님은 주고받을 돈이 없습니다`, `Nothing to send or receive for ${me}`, `${me}さんの送金はありません`)));
       // 내 개인별 항목은 자동으로 펼친다.
       people.forEach(d => (d.open = !!me && d.dataset.name === me));
     };
     if (showChips) {
       ['', ...members].forEach(name => {
-        const c = el('button', 'chip', name || '전체');
+        const c = el('button', 'chip', name || L3('전체', 'All', 'すべて'));
         c.type = 'button';
         c.dataset.name = name;
         c.onclick = () => { me = name; saveMe(me); apply(); };
@@ -514,20 +557,20 @@ function render(data) {
         const btn = el('button', 'copy');
         btn.type = 'button';
         btn.innerHTML = icon('i-copy', 11);
-        const label = el('span', null, '복사');
+        const label = el('span', null, L3('복사', 'Copy', 'コピー'));
         btn.appendChild(label);
         btn.onclick = () => {
           navigator.clipboard.writeText(a.account);
-          label.textContent = '복사됨';
+          label.textContent = L3('복사됨', 'Copied', 'コピーしました');
           btn.classList.add('done');
-          setTimeout(() => { label.textContent = '복사'; btn.classList.remove('done'); }, 1200);
+          setTimeout(() => { label.textContent = L3('복사', 'Copy', 'コピー'); btn.classList.remove('done'); }, 1200);
         };
         row.appendChild(btn);
         box.appendChild(row);
       });
       const head2 = el('div', 'sechead');
       head2.style.marginTop = '14px';
-      head2.appendChild(el('h2', null, '계좌'));
+      head2.appendChild(el('h2', null, L3('계좌', 'Bank accounts', '口座')));
       paper.appendChild(head2);
       paper.appendChild(box);
     }
@@ -537,7 +580,7 @@ function render(data) {
 
   // 날짜별 결제 항목
   paper.appendChild(el('hr'));
-  paper.appendChild(el('h2', null, '결제 항목'));
+  paper.appendChild(el('h2', null, L3('결제 항목', 'Items', '支払い項目')));
   const groups = {};
   expenses.forEach(e => (groups[e.date || ''] ||= []).push(e));
   Object.keys(groups)
@@ -545,19 +588,19 @@ function render(data) {
     .forEach(k => {
       const sum = groups[k].reduce((t, e) => t + (e.amount || 0), 0);
       const head = el('div', 'date');
-      head.appendChild(el('span', null, k || '날짜 없음'));
+      head.appendChild(el('span', null, k || L3('날짜 없음', 'No date', '日付なし')));
       head.appendChild(el('span', 'num', won(sum)));
       paper.appendChild(head);
       groups[k].forEach(e => paper.appendChild(
-        line(e.title || '이름 없는 항목',
-             `${e.payerName} 결제 · ${e.count}명${e.foreign ? ' · ' + e.foreign : ''}`,
+        line(e.title || NOITEM,
+             `${paidBy(e.payerName)} · ${L3(`${e.count}명`, e.count === 1 ? '1 person' : `${e.count} people`, `${e.count}人`)}${e.foreign ? ' · ' + e.foreign : ''}`,
              won(e.amount), null, e.categoryId)));
     });
 
   // 타입(카테고리)별 — 어디에 얼마를 썼나, 비율까지.
   if ((s.categories || []).length) {
     paper.appendChild(el('hr'));
-    paper.appendChild(el('h2', 'types', '타입별'));
+    paper.appendChild(el('h2', 'types', L3('타입별', 'By category', 'カテゴリ別')));
     s.categories.forEach((c, i) => {
       const box = el('div', 'cat');
       const top = el('div', 'top');
@@ -583,33 +626,34 @@ function render(data) {
   const payers = (s.balances || []).filter(b => (b.paidItems || []).length);
   if (payers.length) {
     paper.appendChild(el('hr'));
-    paper.appendChild(el('h2', 'people', '개인별 낸 돈'));
+    paper.appendChild(el('h2', 'people', L3('개인별 낸 돈', 'Paid by each', '各自が支払った額')));
     payers.forEach(b => paper.appendChild(
-      personBox(b.name, '낸 돈 ' + won(b.paid), '', body => {
+      personBox(b.name, L3('낸 돈 ', 'Paid ', '支払い ') + won(b.paid), '', body => {
         b.paidItems.forEach(i =>
-          body.appendChild(line(i.title || '이름 없는 항목', '', won(i.amount), 'in', i.categoryId)));
+          body.appendChild(line(i.title || NOITEM, '', won(i.amount), 'in', i.categoryId)));
       })));
   }
 
   // 개인별 내는 돈 — 맨 마지막. 각자 자기 것만 펴 본다.
   paper.appendChild(el('hr'));
-  paper.appendChild(el('h2', 'people', '개인별 내는 돈'));
+  paper.appendChild(el('h2', 'people', L3('개인별 내는 돈', 'What each pays', '各自の負担')));
   (s.balances || []).forEach(b => {
     const net = b.net || 0;
-    const label = net > 0 ? '받을 돈 ' + won(net) : net < 0 ? '보낼 돈 ' + won(-net) : '정산 완료';
+    const label = net > 0 ? L3('받을 돈 ', 'Gets ', '受け取り ') + won(net)
+      : net < 0 ? L3('보낼 돈 ', 'Sends ', '送金 ') + won(-net) : L3('정산 완료', 'Settled', '精算済み');
     const box = personBox(b.name, label, net > 0 ? 'pos' : net < 0 ? 'neg' : 'zero', body => {
       (b.items || []).filter(i => i.amount !== 0).forEach(i =>
-        body.appendChild(line(i.title || '이름 없는 항목', i.payerName + ' 결제', won(i.amount), 'in', i.categoryId)));
+        body.appendChild(line(i.title || NOITEM, paidBy(i.payerName), won(i.amount), 'in', i.categoryId)));
       // 항목 → 조정 → 단위 → 합계(부담액) 순. 더하고 빼는 과정을 먼저 보여 준다.
       if (b.adjust) body.appendChild(
-        line('개인 조정', b.adjust > 0 ? '더 냄' : '덜 냄', signed(b.adjust), 'in sub'));
+        line(L3('개인 조정', 'Adjustment', '個別調整'), b.adjust > 0 ? MORE : LESS, signed(b.adjust), 'in sub'));
       if (b.rounding) body.appendChild(
-        line(s.rounding || '단위 맞추기', b.rounding > 0 ? '더 냄' : '덜 냄', signed(b.rounding), 'in sub'));
+        line(s.rounding || L3('단위 맞추기', 'Rounding', '端数調整'), b.rounding > 0 ? MORE : LESS, signed(b.rounding), 'in sub'));
       // 이 사람이 실제로 져야 할 몫. 위 항목·조정·단위를 모두 더한 값이다.
-      if (b.owed !== undefined) body.appendChild(line('몫', '', won(b.owed), 'in sum'));
-      if (b.paid) body.appendChild(line('낸 돈', '', minus(b.paid), 'in sub'));
-      if (b.prepaid) body.appendChild(line('미리 낸 회비', '', minus(b.prepaid), 'in sub'));
-    }, b.owed !== undefined ? '몫 ' + won(b.owed) : null);
+      if (b.owed !== undefined) body.appendChild(line(L3('몫', 'Share', '負担分'), '', won(b.owed), 'in sum'));
+      if (b.paid) body.appendChild(line(L3('낸 돈', 'Paid', '支払った額'), '', minus(b.paid), 'in sub'));
+      if (b.prepaid) body.appendChild(line(L3('미리 낸 회비', 'Dues paid', '前払いの会費'), '', minus(b.prepaid), 'in sub'));
+    }, b.owed !== undefined ? L3('몫 ', 'Share ', '負担分 ') + won(b.owed) : null);
     people.push(box);
     paper.appendChild(box);
   });
@@ -617,19 +661,22 @@ function render(data) {
   const days = Math.max(0,
     Math.ceil((new Date(data.expiresAt) - Date.now()) / 86400000));
   // 홍보용처럼 아주 먼 만료일은 날수를 세는 게 무의미하다.
-  const expiry = days > 365 ? '만료 없음' : `${days}일 뒤 만료`;
+  const expiry = days > 365 ? L3('만료 없음', 'No expiry', '期限なし')
+    : L3(`${days}일 뒤 만료`, days === 1 ? 'Expires in 1 day' : `Expires in ${days} days`, `${days}日後に期限切れ`);
   // 앱에서 정산을 고치면 같은 링크 내용이 바뀐다. 언제 기준인지 보여 준다.
   paper.appendChild(el('hr'));
   const foot = el('div', 'foot');
-  foot.append(`${s.updatedAt ? s.updatedAt + ' 기준 · ' : ''}${expiry}`, el('br'),
-    data.includeAccounts ? '계좌는 만든 사람이 켰을 때만 담깁니다' : '계좌는 링크에 담지 않았습니다');
+  foot.append(`${s.updatedAt ? L3(`${s.updatedAt} 기준`, `As of ${s.updatedAt}`, `${s.updatedAt}時点`) + ' · ' : ''}${expiry}`, el('br'),
+    data.includeAccounts
+      ? L3('계좌는 만든 사람이 켰을 때만 담깁니다', 'Bank accounts are included only when the creator turns them on', '口座は作成者がオンにした場合のみ含まれます')
+      : L3('계좌는 링크에 담지 않았습니다', 'Bank accounts are not included in this link', '口座はこのリンクに含まれていません'));
   paper.appendChild(foot);
   const bc = el('div', 'barcode');
   bc.appendChild(el('span'));
   paper.appendChild(bc);
   const year = (s.date || s.updatedAt || String(new Date().getFullYear())).slice(0, 4);
   paper.appendChild(el('div', 'tag',
-    `DDAK · ${year} · #${(s.title || '정산').replace(/\s+/g, '')}`));
+    `DDAK · ${year} · #${(s.title || untitled).replace(/\s+/g, '')}`));
 
   app.innerHTML = '';
   app.appendChild(paper);
@@ -647,10 +694,10 @@ function apps(rows) {
   rows = rows.filter(a => a.id !== 'ddak');
   if (!rows.length) return null;
   const box = el('div', 'apps');
-  box.appendChild(el('div', 't', '이런 앱도 만들고 있습니다'));
+  box.appendChild(el('div', 't', L3('이런 앱도 만들고 있습니다', 'More apps we make', 'ほかにもこんなアプリを作っています')));
   rows.forEach(a => {
     const row = el('div', 'app');
-    const initial = () => el('div', 'no', (a.name_ko || '?')[0]);
+    const initial = () => el('div', 'no', (appName(a) || '?')[0]);
     if (a.icon_url) {
       const img = el('img');
       img.src = a.icon_url;
@@ -664,8 +711,8 @@ function apps(rows) {
     }
 
     const txt = el('div', 'txt');
-    txt.appendChild(el('div', 'n', a.name_ko || a.id));
-    if (a.tagline_ko) txt.appendChild(el('div', 'g', a.tagline_ko));
+    txt.appendChild(el('div', 'n', appName(a)));
+    if (appTag(a)) txt.appendChild(el('div', 'g', appTag(a)));
     row.appendChild(txt);
 
     const links = el('div', 'links');
@@ -677,10 +724,10 @@ function apps(rows) {
         // 아직 그 스토어엔 없다 — 아이콘 자리는 두고 눌리면 안내만.
         const off = el('button');
         off.type = 'button';
-        off.title = `${label}에는 아직 없습니다`;
-        off.setAttribute('aria-label', `${a.name_ko || a.id} · ${label}에는 아직 없습니다`);
+        off.title = L3(`${label}에는 아직 없습니다`, `Not on ${label} yet`, `${label}にはまだありません`);
+        off.setAttribute('aria-label', `${appName(a)} · ${off.title}`);
         off.innerHTML = icon(ic, 14);
-        off.onclick = () => toast(`${a.name_ko || a.id} · ${label}에는 아직 등록되지 않았습니다`);
+        off.onclick = () => toast(`${appName(a)} · ${off.title}`);
         links.appendChild(off);
         return;
       }
@@ -689,7 +736,7 @@ function apps(rows) {
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.title = label;
-      link.setAttribute('aria-label', `${a.name_ko || a.id} · ${label}`);
+      link.setAttribute('aria-label', `${appName(a)} · ${label}`);
       link.innerHTML = icon(ic, 14);
       links.appendChild(link);
     });
@@ -715,7 +762,7 @@ function houseAd(rows) {
   box.href = fromShare(href);
   box.target = '_blank';
   box.rel = 'noopener';
-  const initial = () => el('div', 'no', (a.name_ko || '?')[0]);
+  const initial = () => el('div', 'no', (appName(a) || '?')[0]);
   if (a.icon_url) {
     const img = el('img');
     img.src = a.icon_url;
@@ -727,10 +774,10 @@ function houseAd(rows) {
     box.appendChild(initial());
   }
   const txt = el('div', 'txt');
-  txt.appendChild(el('div', 'n', a.name_ko || a.id));
-  if (a.tagline_ko) txt.appendChild(el('div', 'g', a.tagline_ko));
+  txt.appendChild(el('div', 'n', appName(a)));
+  if (appTag(a)) txt.appendChild(el('div', 'g', appTag(a)));
   box.appendChild(txt);
-  box.appendChild(el('span', 'go', '보기'));
+  box.appendChild(el('span', 'go', L3('보기', 'View', '見る')));
   box.appendChild(el('span', 'lab', 'AD'));
   return box;
 }
@@ -740,8 +787,8 @@ function promo() {
   const head = el('div', 'head');
   head.innerHTML = icon('m-a', 42);
   const txt = el('div');
-  txt.appendChild(el('div', 't', '다음 정산은 딱정산으로'));
-  txt.appendChild(el('div', 'd', '쓴 돈만 적으면 누가 누구에게 얼마, 계좌까지.'));
+  txt.appendChild(el('div', 't', L3('다음 정산은 딱정산으로', 'Next time, settle up with 딱정산', '次の精算は딱정산で')));
+  txt.appendChild(el('div', 'd', L3('쓴 돈만 적으면 누가 누구에게 얼마, 계좌까지.', 'Just log what you spent — who pays whom, how much, and where.', '使ったお金を入れるだけで、誰が誰にいくら、口座まで。')));
   head.appendChild(txt);
   box.appendChild(head);
 
@@ -765,21 +812,24 @@ const token = (location.hash || '').replace(/^#/, '').trim()
   || new URLSearchParams(location.search).get('t') || '';
 
 if (!token) {
-  state('링크가 올바르지 않습니다', '정산을 만든 사람에게 링크를 다시 받아 주세요.');
+  state(L3('링크가 올바르지 않습니다', 'This link is not valid', 'リンクが正しくありません'),
+    L3('정산을 만든 사람에게 링크를 다시 받아 주세요.', 'Ask the person who made the settlement to send it again.', '精算を作った人にもう一度リンクをもらってください。'));
 } else {
   fetch(FN + encodeURIComponent(token))
     .then(async r => {
       const body = await r.json().catch(() => ({}));
       if (r.ok) return render(body);
       if (r.status === 410) {
-        state('링크가 만료되었습니다', '정산을 만든 사람에게 새 링크를 받아 주세요.', '410');
+        state(L3('링크가 만료되었습니다', 'This link has expired', 'リンクの期限が切れました'),
+          L3('정산을 만든 사람에게 새 링크를 받아 주세요.', 'Ask the person who made the settlement for a new link.', '精算を作った人に新しいリンクをもらってください。'), '410');
       } else if (r.status === 404) {
-        state('정산을 찾을 수 없습니다', '링크가 취소되었거나 주소가 잘못되었습니다.', '404');
+        state(L3('정산을 찾을 수 없습니다', 'Settlement not found', '精算が見つかりません'),
+          L3('링크가 취소되었거나 주소가 잘못되었습니다.', 'The link was revoked or the address is wrong.', 'リンクが取り消されたか、アドレスが間違っています。'), '404');
       } else {
-        state('불러오지 못했습니다', '잠시 뒤 다시 열어 주세요.');
+        state(L3('불러오지 못했습니다', 'Could not load', '読み込めませんでした'), L3('잠시 뒤 다시 열어 주세요.', 'Please try again in a moment.', 'しばらくしてからもう一度開いてください。'));
       }
     })
-    .catch(() => state('불러오지 못했습니다', '인터넷 연결을 확인해 주세요.'));
+    .catch(() => state(L3('불러오지 못했습니다', 'Could not load', '読み込めませんでした'), L3('인터넷 연결을 확인해 주세요.', 'Check your internet connection.', 'インターネット接続を確認してください。')));
 }
 </script>
 </body>
