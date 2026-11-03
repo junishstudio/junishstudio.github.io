@@ -9,9 +9,9 @@
 // 유입 출처: ?src=threads처럼 넘기면 그 이름, 없으면 link. Play는 utm으로 콘솔에 잡힌다.
 var S=(new URLSearchParams(location.search).get('src')||'').replace(/[^\w-]/g,'').slice(0,30)||'link';
 function T(u){return /apple\.com/.test(u)?u+'?pt=129127072&ct='+S+'&mt=8':u+'&referrer=utm_source%3D'+S+'%26utm_campaign%3D'+S}
-// App Store는 아직 준비 중 — 안드로이드만 바로 Play로 보낸다(아이폰은 이 페이지에 남아 안내를 본다).
-(function(){var u=navigator.userAgent,aos=/Android/.test(u),A='https://play.google.com/store/apps/details?id=com.junish.triply';
-if(aos)location.replace(T(A));})();
+// ponytail: UA 분기만. 아이패드(iPadOS 13+)는 Mac으로 보이므로 터치 여부로 구분.
+(function(){var u=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1),aos=/Android/.test(u),A='https://play.google.com/store/apps/details?id=com.junish.triply';
+if(ios)location.replace(T('https://apps.apple.com/app/id6797023123'));else if(aos)location.replace(T(A));})();
 </script>
 <style>:root{color-scheme:light dark;--bg:#F7F6F4;--ink:#16150F;--sub:#5B5A54;--line:#E4E2DC}
 @media (prefers-color-scheme:dark){:root{--bg:#16150F;--ink:#F7F6F4;--sub:#A8A69E;--line:#2C2B25}}
@@ -21,6 +21,6 @@ img{width:96px;height:96px;border-radius:22px}h1{font-size:1.6rem;margin:.8rem 0
 .soon{display:block;margin:.5rem auto;max-width:260px;padding:.8rem 1rem;border-radius:999px;border:1px dashed var(--line);color:var(--sub);font-weight:700}
 .f{margin-top:1.6rem;font-size:.85rem}.f a{color:var(--sub)}</style></head><body><main>
 <img src="icon.png" alt="트리플리 아이콘"><h1>트리플리</h1><p class="s">여행 기록 앱 · 사진만 고르면 다녀온 곳이 지도에 칠해져요</p>
-<a class="b" href="https://play.google.com/store/apps/details?id=com.junish.triply">Google Play</a><span class="soon">App Store 준비 중</span>
+<a class="b" href="https://apps.apple.com/app/id6797023123">App Store</a><a class="b" href="https://play.google.com/store/apps/details?id=com.junish.triply">Google Play</a>
 <p class="f"><a href="/">Junish 앱 모두 보기</a></p></main>
 <script>document.querySelectorAll('a.b').forEach(function(a){a.href=T(a.href)})</script></body></html>
