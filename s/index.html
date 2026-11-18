@@ -548,7 +548,7 @@ function render(data) {
 
   // 보낼 돈 — 합계 바로 아래. 이름을 고르면 내 송금만 남는다.
   let people = [];
-  if (transfers.length) {
+  if (transfers.length || byCurrency.length) {
     paper.appendChild(el('hr'));
     const head = el('div', 'sechead');
     head.appendChild(el('h2', null, L3('보낼 돈', 'Transfers', '送金')));
@@ -565,7 +565,8 @@ function render(data) {
       list.innerHTML = '';
       const mine = transfers.filter(t => !me || t.fromName === me || t.toName === me);
       mine.forEach(t => list.appendChild(transferCard(t, !accounts)));
-      if (!mine.length) list.appendChild(el('div', 'empty', L3(`${me} 님은 주고받을 돈이 없습니다`, `Nothing to send or receive for ${me}`, `${me}さんの送金はありません`)));
+      if (!transfers.length) list.appendChild(el('div', 'empty', L3('대표 화폐로는 주고받을 돈이 없습니다', 'Nothing to send in the main currency', '基準通貨での送金はありません')));
+      else if (!mine.length) list.appendChild(el('div', 'empty', L3(`${me} 님은 주고받을 돈이 없습니다`, `Nothing to send or receive for ${me}`, `${me}さんの送金はありません`)));
       paintCurrency(me);
       // 내 개인별 항목은 자동으로 펼친다.
       people.forEach(d => (d.open = !!me && d.dataset.name === me));
@@ -617,7 +618,6 @@ function render(data) {
     paper.appendChild(el('hr'));
     paper.appendChild(el('h2', null, L3('결제 화폐별로 보낼 때', 'Paying in each currency', '支払通貨別に送る場合')));
     paper.appendChild(currencyList);
-    if (!transfers.length) paintCurrency('');
   }
 
   // 날짜별 결제 항목
