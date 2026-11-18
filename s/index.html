@@ -280,6 +280,7 @@ document.documentElement.lang = LANG;
 document.querySelector('.loadtext').textContent = L3('영수증을 불러오는 중', 'Loading the receipt', 'レシートを読み込み中');
 // 정산 기준 화폐. 금액은 최소 단위 정수(달러·유로는 센트) — 앱 AppCurrency와 같은 표기.
 let CUR = 'KRW';
+let currencyDecimals = 0;
 
 // 사람 캡슐 색. 앱 PersonColors.pairs와 같은 순서 — 인원 순서대로 배정한다.
 const PERSON = [
@@ -289,7 +290,7 @@ const PERSON = [
 // 카테고리 막대. 앱 barPalette(잉크 → 라임 → 회색).
 const BARS = ['#14161A', '#D9F26A', '#C9CDD1', '#9AA1A8', '#E9E8E2'];
 
-const DEC = () => (CUR === 'USD' || CUR === 'EUR' ? 2 : 0);
+const DEC = () => currencyDecimals;
 const num = n => ((n || 0) / 10 ** DEC())
   .toLocaleString('en-US', { minimumFractionDigits: DEC(), maximumFractionDigits: DEC() });
 // 화폐 기호: [앞, 뒤]. 원 → 12,000원 / ₩12,000 / 12,000ウォン
@@ -298,7 +299,7 @@ const unit = () => ({
   JPY: [L3('', '¥', ''), L3('엔', '', '円')],
   USD: ['$', ''],
   EUR: ['€', ''],
-}[CUR] || ['', '']);
+}[CUR] || [CUR + ' ', '']);
 const won = n => {
   const [pre, post] = unit();
   return (n < 0 ? '−' : '') + pre + num(Math.abs(n || 0)) + post;
@@ -424,6 +425,25 @@ function personBox(name, amountLabel, tone, fill, sub) {
   return box;
 }
 
+function currencyCard(t) {
+  const digits = [0, 2, 3].includes(t.decimals) ? t.decimals : 0;
+  const amount = ((t.amount || 0) / 10 ** digits)
+    .toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const box = el('div', 'send');
+  const top = el('div', 'top');
+  top.appendChild(pill(t.fromName));
+  top.insertAdjacentHTML('beforeend', icon('i-arrow', 14, 'arrow'));
+  top.appendChild(pill(t.toName));
+  top.appendChild(el('span', 'amt num', `${t.currency} ${amount}`));
+  box.appendChild(top);
+  if (t.converted != null) {
+    const approx = el('div', 'meta', `≈ ${won(t.converted)}`);
+    approx.style.textAlign = 'right';
+    box.appendChild(approx);
+  }
+  return box;
+}
+
 function transferCard(t, perTransferAccount) {
   const box = el('div', 'send');
   const top = el('div', 'top');
@@ -462,7 +482,11 @@ function render(data) {
   STYLES = (s.categoryStyles && typeof s.categoryStyles === 'object') ? s.categoryStyles : {};
   // 새 앱은 계좌를 사람마다 한 번(accounts)만 싣는다. 예전 링크는 송금마다 붙어 온다.
   const accounts = Array.isArray(s.accounts) ? s.accounts : null;
-  CUR = s.currency || 'KRW';
+  CUR = /^[A-Z]{3}$/.test(s.currency) ? s.currency : 'KRW';
+  currencyDecimals = [0, 2, 3].includes(s.currencyDecimals)
+    ? s.currencyDecimals
+    : ['KRW', 'JPY', 'VND', 'ISK', 'CLP', 'XPF', 'XOF', 'XAF'].includes(CUR) ? 0
+    : ['OMR', 'JOD', 'KWD', 'BHD', 'TND'].includes(CUR) ? 3 : 2;
   const untitled = L3('정산', 'Settlement', '精算');
   document.title = (s.title || untitled) + ' · 딱정산';
   colorOf = name => {
@@ -513,9 +537,18 @@ function render(data) {
     paper.appendChild(mc);
   }
 
+  const byCurrency = Array.isArray(s.currencyTransfers) ? s.currencyTransfers : [];
+  const currencyList = el('div');
+  const paintCurrency = me => {
+    currencyList.innerHTML = '';
+    const mine = byCurrency.filter(t => !me || t.fromName === me || t.toName === me);
+    mine.forEach(t => currencyList.appendChild(currencyCard(t)));
+    if (!mine.length) currencyList.appendChild(el('div', 'empty', L3(`${me} 님은 주고받을 돈이 없습니다`, `Nothing to send or receive for ${me}`, `${me}さんの送金はありません`)));
+  };
+
   // 보낼 돈 — 합계 바로 아래. 이름을 고르면 내 송금만 남는다.
   let people = [];
-  if (transfers.length) {
+  if (transfers.length || byCurrency.length) {
     paper.appendChild(el('hr'));
     const head = el('div', 'sechead');
     head.appendChild(el('h2', null, L3('보낼 돈', 'Transfers', '送金')));
@@ -532,7 +565,9 @@ function render(data) {
       list.innerHTML = '';
       const mine = transfers.filter(t => !me || t.fromName === me || t.toName === me);
       mine.forEach(t => list.appendChild(transferCard(t, !accounts)));
-      if (!mine.length) list.appendChild(el('div', 'empty', L3(`${me} 님은 주고받을 돈이 없습니다`, `Nothing to send or receive for ${me}`, `${me}さんの送金はありません`)));
+      if (!transfers.length) list.appendChild(el('div', 'empty', L3('대표 화폐로는 주고받을 돈이 없습니다', 'Nothing to send in the main currency', '基準通貨での送金はありません')));
+      else if (!mine.length) list.appendChild(el('div', 'empty', L3(`${me} 님은 주고받을 돈이 없습니다`, `Nothing to send or receive for ${me}`, `${me}さんの送金はありません`)));
+      paintCurrency(me);
       // 내 개인별 항목은 자동으로 펼친다.
       people.forEach(d => (d.open = !!me && d.dataset.name === me));
     };
@@ -576,6 +611,13 @@ function render(data) {
     }
     // 개인별 상자를 만든 뒤에 적용한다.
     queueMicrotask(apply);
+  }
+
+  // 외화가 섞인 정산 — 결제한 화폐 그대로 따로 보낼 때의 금액. 앱의 '결제 화폐별' 결과와 같다.
+  if (byCurrency.length) {
+    paper.appendChild(el('hr'));
+    paper.appendChild(el('h2', null, L3('결제 화폐별로 보낼 때', 'Paying in each currency', '支払通貨別に送る場合')));
+    paper.appendChild(currencyList);
   }
 
   // 날짜별 결제 항목
