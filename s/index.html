@@ -425,6 +425,25 @@ function personBox(name, amountLabel, tone, fill, sub) {
   return box;
 }
 
+function currencyCard(t) {
+  const digits = [0, 2, 3].includes(t.decimals) ? t.decimals : 0;
+  const amount = ((t.amount || 0) / 10 ** digits)
+    .toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const box = el('div', 'send');
+  const top = el('div', 'top');
+  top.appendChild(pill(t.fromName));
+  top.insertAdjacentHTML('beforeend', icon('i-arrow', 14, 'arrow'));
+  top.appendChild(pill(t.toName));
+  top.appendChild(el('span', 'amt num', `${t.currency} ${amount}`));
+  box.appendChild(top);
+  if (t.converted != null) {
+    const approx = el('div', 'meta', `≈ ${won(t.converted)}`);
+    approx.style.textAlign = 'right';
+    box.appendChild(approx);
+  }
+  return box;
+}
+
 function transferCard(t, perTransferAccount) {
   const box = el('div', 'send');
   const top = el('div', 'top');
@@ -518,6 +537,15 @@ function render(data) {
     paper.appendChild(mc);
   }
 
+  const byCurrency = Array.isArray(s.currencyTransfers) ? s.currencyTransfers : [];
+  const currencyList = el('div');
+  const paintCurrency = me => {
+    currencyList.innerHTML = '';
+    const mine = byCurrency.filter(t => !me || t.fromName === me || t.toName === me);
+    mine.forEach(t => currencyList.appendChild(currencyCard(t)));
+    if (!mine.length) currencyList.appendChild(el('div', 'empty', L3(`${me} 님은 주고받을 돈이 없습니다`, `Nothing to send or receive for ${me}`, `${me}さんの送金はありません`)));
+  };
+
   // 보낼 돈 — 합계 바로 아래. 이름을 고르면 내 송금만 남는다.
   let people = [];
   if (transfers.length) {
@@ -538,6 +566,7 @@ function render(data) {
       const mine = transfers.filter(t => !me || t.fromName === me || t.toName === me);
       mine.forEach(t => list.appendChild(transferCard(t, !accounts)));
       if (!mine.length) list.appendChild(el('div', 'empty', L3(`${me} 님은 주고받을 돈이 없습니다`, `Nothing to send or receive for ${me}`, `${me}さんの送金はありません`)));
+      paintCurrency(me);
       // 내 개인별 항목은 자동으로 펼친다.
       people.forEach(d => (d.open = !!me && d.dataset.name === me));
     };
@@ -584,28 +613,11 @@ function render(data) {
   }
 
   // 외화가 섞인 정산 — 결제한 화폐 그대로 따로 보낼 때의 금액. 앱의 '결제 화폐별' 결과와 같다.
-  const byCurrency = Array.isArray(s.currencyTransfers) ? s.currencyTransfers : [];
   if (byCurrency.length) {
     paper.appendChild(el('hr'));
     paper.appendChild(el('h2', null, L3('결제 화폐별로 보낼 때', 'Paying in each currency', '支払通貨別に送る場合')));
-    byCurrency.forEach(t => {
-      const digits = [0, 2, 3].includes(t.decimals) ? t.decimals : 0;
-      const amount = ((t.amount || 0) / 10 ** digits)
-        .toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-      const box = el('div', 'send');
-      const top = el('div', 'top');
-      top.appendChild(pill(t.fromName));
-      top.insertAdjacentHTML('beforeend', icon('i-arrow', 14, 'arrow'));
-      top.appendChild(pill(t.toName));
-      top.appendChild(el('span', 'amt num', `${t.currency} ${amount}`));
-      box.appendChild(top);
-      if (t.converted != null) {
-        const approx = el('div', 'meta', `≈ ${won(t.converted)}`);
-        approx.style.textAlign = 'right';
-        box.appendChild(approx);
-      }
-      paper.appendChild(box);
-    });
+    paper.appendChild(currencyList);
+    if (!transfers.length) paintCurrency('');
   }
 
   // 날짜별 결제 항목
